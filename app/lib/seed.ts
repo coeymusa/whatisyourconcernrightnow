@@ -1,4 +1,4 @@
-import type { Concern, ConcernCategory } from "./types";
+import type { Concern, ConcernCategory, Solution } from "./types";
 import { ageToBracket } from "./types";
 
 type Seed = Omit<Concern, "id" | "ts" | "bracket">;
@@ -195,3 +195,53 @@ export const STREAM_FRAGMENTS: Array<Omit<Seed, "category"> & { category: Concer
   { age: 34, countryCode: "VN", text: "the river tastes different than it did.", category: "climate" },
   { age: 21, countryCode: "PH", text: "I worry about my mother during typhoons.", category: "climate" },
 ];
+
+// Hand-written seed responses tied to specific seed concern indices.
+// Each is a small act of solidarity, perspective, or practical advice.
+type RawSolution = { concernIndex: number; age: number; countryCode: string; text: string };
+
+const RAW_SOLUTIONS: RawSolution[] = [
+  { concernIndex: 0, age: 41, countryCode: "DK", text: "we had two kids on a teacher's salary. it was not the right time. it was never going to be. you start anyway." },
+  { concernIndex: 0, age: 33, countryCode: "PT", text: "the math will not work. nobody's does. love is the math." },
+  { concernIndex: 1, age: 52, countryCode: "JP", text: "leave the apps for a month. ride a bus. talk to one stranger a day. it is brutally simple and it works." },
+  { concernIndex: 2, age: 39, countryCode: "DE", text: "make one decision before the crisis: who has medical power of attorney. write it down. it spares everyone." },
+  { concernIndex: 4, age: 45, countryCode: "GB", text: "split the city. pool with a friend. own one bedroom together. it's not failure, it's how we used to do it." },
+  { concernIndex: 6, age: 28, countryCode: "AU", text: "join the local school board. one person showing up changes the room." },
+  { concernIndex: 7, age: 50, countryCode: "CA", text: "the fires are real. the despair is optional. plant something native this weekend." },
+  { concernIndex: 10, age: 42, countryCode: "BR", text: "support indigenous-led land trusts directly. money does what petitions can't." },
+  { concernIndex: 14, age: 34, countryCode: "AR", text: "we wrote a constitution. that mattered. losing a vote is not the same as losing the principle." },
+  { concernIndex: 17, age: 60, countryCode: "GB", text: "every nurse you meet — say thank you out loud. then write your MP. one without the other is decoration." },
+  { concernIndex: 18, age: 31, countryCode: "GB", text: "rent strike. it sounds dramatic. it is also the only thing landlords actually fear." },
+  { concernIndex: 19, age: 70, countryCode: "GB", text: "we voted our way in. we can vote our way out. show up to every local council meeting until then." },
+  { concernIndex: 22, age: 48, countryCode: "DE", text: "the centre is whoever shows up. show up." },
+  { concernIndex: 27, age: 36, countryCode: "DK", text: "go to a concert alone next saturday. it counts. trust me." },
+  { concernIndex: 31, age: 29, countryCode: "PL", text: "join an NGO that works on independent press. boring is the work." },
+  { concernIndex: 41, age: 55, countryCode: "IL", text: "talk to one person who is on the other side every week. it costs nothing and changes everything." },
+  { concernIndex: 42, age: 23, countryCode: "JO", text: "writing it down counts. we are reading it. you are not invisible." },
+  { concernIndex: 47, age: 39, countryCode: "IN", text: "switch household to LPG and an air purifier in the bedroom. won't fix Delhi. will fix tonight." },
+  { concernIndex: 49, age: 44, countryCode: "IN", text: "subscribe to one newspaper that disagrees with your father. read the headlines aloud at dinner." },
+  { concernIndex: 56, age: 31, countryCode: "JP", text: "the country shrinking is a problem we can be proud of solving slowly. don't import the panic." },
+  { concernIndex: 58, age: 52, countryCode: "KR", text: "a hobby that costs nothing. a friend who is older than you. a walk that has no destination." },
+  { concernIndex: 64, age: 26, countryCode: "PH", text: "join a barangay disaster prep group. it's the most useful thing I've ever done." },
+  { concernIndex: 67, age: 47, countryCode: "MY", text: "vote in the Bersih marches. boring is the strategy." },
+  { concernIndex: 71, age: 33, countryCode: "AU", text: "the bees thing — plant grevillea, banksia, native lavender. corridor matters more than mass." },
+  { concernIndex: 76, age: 24, countryCode: "NG", text: "if you're staying — find five other stayers. that's the country." },
+  { concernIndex: 77, age: 30, countryCode: "GH", text: "the diaspora is also you in five years. start the WhatsApp group now." },
+  { concernIndex: 89, age: 29, countryCode: "MX", text: "we are not the cartels. we are not the silence either. write your name on something." },
+  { concernIndex: 92, age: 36, countryCode: "FI", text: "learn to teach the model. you outlast it that way." },
+  { concernIndex: 96, age: 40, countryCode: "AU", text: "give 10% to the cause that scares you most. money where the fear is." },
+  { concernIndex: 99, age: 51, countryCode: "CA", text: "find a GP outside the major city. drive 90 minutes. waitlists are smaller. nobody talks about this." },
+  { concernIndex: 24, age: 38, countryCode: "ES", text: "cooperative grocery, neighborhood swap. we all stopped going to the supermarket. it works." },
+  { concernIndex: 13, age: 44, countryCode: "CL", text: "the second draft will come. movements are long. rest." },
+  { concernIndex: 32, age: 27, countryCode: "BG", text: "you are not alone here. write to someone who left. they want to hear from home." },
+];
+
+export const SEED_SOLUTIONS: Solution[] = RAW_SOLUTIONS.map((s, i) => ({
+  id: `sol-seed-${i}`,
+  concernId: `seed-${s.concernIndex}`,
+  age: s.age,
+  bracket: ageToBracket(s.age),
+  countryCode: s.countryCode,
+  text: s.text,
+  ts: SEED_ORIGIN - Math.floor(det(1000 + i) * 1000 * 60 * 60 * 30),
+}));

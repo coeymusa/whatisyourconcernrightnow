@@ -9,6 +9,7 @@ type Props = {
   total: number;
   countries: number;
   latest: Concern | undefined;
+  responses: number;
 };
 
 function relativeTime(ts: number): string {
@@ -20,7 +21,7 @@ function relativeTime(ts: number): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-export default function Hero({ total, countries, latest }: Props) {
+export default function Hero({ total, countries, latest, responses }: Props) {
   // mount guard for time-relative text to avoid SSR drift
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -84,17 +85,9 @@ export default function Hero({ total, countries, latest }: Props) {
           className="mt-14 grid grid-cols-2 gap-6 border-y border-ink/15 py-6 font-mono text-xs uppercase tracking-[0.16em] text-ink/80 sm:grid-cols-4 sm:gap-12 sm:text-sm"
         >
           <Stat label="voices recorded" value={total.toLocaleString()} accent />
+          <Stat label="responses given" value={responses.toLocaleString()} amber />
           <Stat label="countries" value={countries.toString()} />
-          <Stat label="last entry" value={latest && mounted ? relativeTime(latest.ts) : "—"} />
-          <Stat
-            label="origin"
-            value={
-              latest && latestCountry
-                ? `${latestCountry}, age ${latest.age}`
-                : "listening…"
-            }
-            small
-          />
+          <Stat label="last entry" value={latest && mounted ? relativeTime(latest.ts) : "—"} small />
         </motion.div>
 
         <motion.a
@@ -146,11 +139,13 @@ function Stat({
   label,
   value,
   accent,
+  amber,
   small,
 }: {
   label: string;
   value: string;
   accent?: boolean;
+  amber?: boolean;
   small?: boolean;
 }) {
   return (
@@ -159,7 +154,7 @@ function Stat({
       <span
         className={`font-serif italic ${
           small ? "text-base sm:text-lg" : "text-2xl sm:text-3xl"
-        } ${accent ? "text-blood" : "text-ink"}`}
+        } ${accent ? "text-blood" : amber ? "text-amber" : "text-ink"}`}
       >
         {value}
       </span>

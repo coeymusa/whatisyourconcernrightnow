@@ -1,0 +1,125 @@
+import { NextResponse } from "next/server";
+import { ageToBracket, type Solution } from "../../lib/types";
+import { findCountry } from "../../lib/countries";
+import { SEED_SOLUTIONS } from "../../lib/seed";
+import {
+  fetchSolutions,
+  hasSupabase,
+  insertSolution,
+  recentSolutionsByIp,
+} from "../../lib/supabase";
+import { hashIp, rateLimitOk } from "../../lib/rate-limit";
+import { verifyTurnstile } from "../../lib/turnstile";
+
+const STORE: Solution[] = [...SEED_SOLUTIONS];
+
+function clientIp(req: Request): string {
+  const xf = req.headers.get("x-forwarded-for");
+  if (xf) return xf.split(",")[0].trim();
+  return req.headers.get("cf-connecting-ip") ?? "0.0.0.0";
+}
+
+export async function GET() {
+  if (hasSupabase()) {
+    const rows = await fetchSolutions(200);
+    const items: Solution[] = rows.map((r) => ({
+      id: r.id,
+      concernId: r.concern_id,
+      age: r.age,
+      bracket: r.bracket as Solution["bracket"],
+      countryCode: r.country_code,
+      text: r.text,
+      ts: new Date(r.created_at).getTime(),
+    }));
+    return NextResponse.json({ total: items.length, solutions: items });
+  }
+  return NextResponse.json({
+    total: STORE.length,
+    solutions: STORE.slice(-200),
+  });
+}
+
+export async function POST(req: Request) {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "invalid json" }, { status: 400 });
+  }
+
+  const b = body as Partial<{
+    concernId: string;
+    age: number;
+    countryCode: string;
+    text: string;
+    turnstileToken: string;
+  }>;
+
+  const concernId = (b.concernId ?? "").toString();
+  const age = Number(b.age);
+  const text = (b.text ?? "").toString().trim();
+  const country = (b.countryCode ?? "").toString().toUpperCase();
+
+  if (!concernId) {
+    return NextResponse.json({ error: "missing concernId" }, { status: 400 });
+  }
+  if (!Number.isFinite(age) || age < 13 || age > 120) {
+    return NextResponse.json({ error: "age out of range" }, { status: 400 });
+  }
+  if (!findCountry(country)) {
+    return NextResponse.json({ error: "unknown country" }, { status: 400 });
+  }
+  if (text.length < 4 || text.length > 280) {
+    return NextResponse.json({ error: "text length" }, { status: 400 });
+  }
+
+  const ip = clientIp(req);
+  const ok = await verifyTurnstile(b.turnstileToken, ip);
+  if (!ok) return NextResponse.json({ error: "challenge failed" }, { status: 403 });
+
+  const ipHash = await hashIp(ip);
+  if (hasSupabase()) {
+    const recent = await recentSolutionsByIp(ipHash);
+    if (recent >= 8) return NextResponse.json({ error: "slow down" }, { status: 429 });
+  } else if (!rateLimitOk(ipHash, 10)) {
+    return NextResponse.json({ error: "slow down" }, { status: 429 });
+  }
+
+  const bracket = ageToBracket(age);
+
+  if (hasSupabase()) {
+    const row = await insertSolution({
+      concern_id: concernId,
+      age,
+      bracket,
+      country_code: country,
+      text,
+      ip_hash: ipHash,
+    });
+    if (!row) {
+      return NextResponse.json({ error: "persistence failed" }, { status: 500 });
+    }
+    const sol: Solution = {
+      id: row.id,
+      concernId: row.concern_id,
+      age: row.age,
+      bracket: row.bracket as Solution["bracket"],
+      countryCode: row.country_code,
+      text: row.text,
+      ts: new Date(row.created_at).getTime(),
+    };
+    return NextResponse.json({ ok: true, solution: sol });
+  }
+
+  const sol: Solution = {
+    id: `srv-sol-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    concernId,
+    age,
+    bracket,
+    countryCode: country,
+    text,
+    ts: Date.now(),
+  };
+  STORE.push(sol);
+  return NextResponse.json({ ok: true, solution: sol, total: STORE.length });
+}

@@ -1,29 +1,30 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { Concern, ConcernCategory } from "./types";
+import type { Concern, ConcernCategory, Solution } from "./types";
 import { ageToBracket } from "./types";
-import { SEED_CONCERNS, STREAM_FRAGMENTS } from "./seed";
+import { SEED_CONCERNS, SEED_SOLUTIONS, STREAM_FRAGMENTS } from "./seed";
 
 const STORAGE_KEY = "concern.submissions.v1";
+const SOL_STORAGE_KEY = "concern.solutions.v1";
 
-function loadUserSubmissions(): Concern[] {
+function loadFromStorage<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed)) return parsed as T[];
   } catch {
     /* ignore */
   }
   return [];
 }
 
-function saveUserSubmissions(items: Concern[]) {
+function saveToStorage<T>(key: string, items: T[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(-200)));
+    localStorage.setItem(key, JSON.stringify(items.slice(-200)));
   } catch {
     /* ignore */
   }
@@ -31,20 +32,18 @@ function saveUserSubmissions(items: Concern[]) {
 
 /**
  * The "global record" — seed + ambient synthetic arrivals + user submissions.
- * Synthetic arrivals are appended periodically to give the page the feel of
- * being populated by a live, anonymous stream from around the world.
+ * Includes both concerns and solutions; the page is one shared timeline.
  */
 export function useConcernRecord() {
   const [concerns, setConcerns] = useState<Concern[]>(() => SEED_CONCERNS);
-  const [userSubmissions, setUserSubmissions] = useState<Concern[]>([]);
+  const [solutions, setSolutions] = useState<Solution[]>(() => SEED_SOLUTIONS);
 
   // hydrate user submissions from storage on mount
   useEffect(() => {
-    const stored = loadUserSubmissions();
-    if (stored.length > 0) {
-      setUserSubmissions(stored);
-      setConcerns((c) => [...c, ...stored]);
-    }
+    const storedConcerns = loadFromStorage<Concern>(STORAGE_KEY);
+    if (storedConcerns.length > 0) setConcerns((c) => [...c, ...storedConcerns]);
+    const storedSolutions = loadFromStorage<Solution>(SOL_STORAGE_KEY);
+    if (storedSolutions.length > 0) setSolutions((s) => [...s, ...storedSolutions]);
   }, []);
 
   // ambient stream — adds a "discovered" concern every 5–10s
@@ -88,21 +87,45 @@ export function useConcernRecord() {
         ts: Date.now(),
       };
       setConcerns((prev) => [...prev, c]);
-      setUserSubmissions((prev) => {
-        const next = [...prev, c];
-        saveUserSubmissions(next);
-        return next;
-      });
+      // persist user submission
+      const next = [...loadFromStorage<Concern>(STORAGE_KEY), c];
+      saveToStorage(STORAGE_KEY, next);
       return c;
     },
     [],
   );
 
-  return { concerns, userSubmissions, submit };
+  const submitSolution = useCallback(
+    (input: { concernId: string; age: number; countryCode: string; text: string }) => {
+      const s: Solution = {
+        id: `you-sol-${Date.now()}`,
+        concernId: input.concernId,
+        age: input.age,
+        bracket: ageToBracket(input.age),
+        countryCode: input.countryCode,
+        text: input.text.trim(),
+        ts: Date.now(),
+      };
+      setSolutions((prev) => [...prev, s]);
+      const next = [...loadFromStorage<Solution>(SOL_STORAGE_KEY), s];
+      saveToStorage(SOL_STORAGE_KEY, next);
+      // best-effort persistence
+      if (typeof window !== "undefined") {
+        fetch("/api/solutions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        }).catch(() => {});
+      }
+      return s;
+    },
+    [],
+  );
+
+  return { concerns, solutions, submit, submitSolution };
 }
 
 // classify a free-text concern into a category by keyword sniffing.
-// good enough for an MVP — the real version uses an embedding classifier server-side.
 const KEYWORDS: Record<ConcernCategory, RegExp> = {
   economy: /\b(rent|salary|wage|price|inflation|economy|jobs?|cost|afford|money|currency|dollar|euro|peso|lira|cedi)/i,
   climate: /\b(climate|fire|flood|heat|drought|warming|carbon|water|monsoon|typhoon|storm|smoke|glacier|ice|sea level|biodiversity|bees?|river)/i,

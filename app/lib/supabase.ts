@@ -75,3 +75,59 @@ export async function recentSubmissionsByIp(ipHash: string): Promise<number> {
   const v = await r.json();
   return typeof v === "number" ? v : 0;
 }
+
+// --- Solutions ---------------------------------------------------------------
+type SolRow = {
+  id: string;
+  concern_id: string;
+  age: number;
+  bracket: string;
+  country_code: string;
+  text: string;
+  created_at: string;
+};
+
+export async function fetchSolutions(limit = 200): Promise<SolRow[]> {
+  const base = process.env[URL_KEY];
+  const k = key();
+  if (!base || !k) return [];
+  const url = `${base}/rest/v1/solutions_public?select=*&order=created_at.desc&limit=${limit}`;
+  const r = await fetch(url, { headers: headers(k), cache: "no-store" });
+  if (!r.ok) return [];
+  return (await r.json()) as SolRow[];
+}
+
+export async function insertSolution(input: {
+  concern_id: string;
+  age: number;
+  bracket: string;
+  country_code: string;
+  text: string;
+  ip_hash: string | null;
+}): Promise<SolRow | null> {
+  const base = process.env[URL_KEY];
+  const k = process.env[SERVICE_KEY];
+  if (!base || !k) return null;
+  const r = await fetch(`${base}/rest/v1/solutions`, {
+    method: "POST",
+    headers: headers(k),
+    body: JSON.stringify(input),
+  });
+  if (!r.ok) return null;
+  const rows = (await r.json()) as SolRow[];
+  return rows[0] ?? null;
+}
+
+export async function recentSolutionsByIp(ipHash: string): Promise<number> {
+  const base = process.env[URL_KEY];
+  const k = process.env[SERVICE_KEY];
+  if (!base || !k) return 0;
+  const r = await fetch(`${base}/rest/v1/rpc/recent_solutions`, {
+    method: "POST",
+    headers: headers(k),
+    body: JSON.stringify({ p_ip_hash: ipHash }),
+  });
+  if (!r.ok) return 0;
+  const v = await r.json();
+  return typeof v === "number" ? v : 0;
+}

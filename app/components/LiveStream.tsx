@@ -7,11 +7,19 @@ import { findCountry } from "../lib/countries";
 
 type Props = {
   concerns: Concern[];
+  solutions?: import("../lib/types").Solution[];
+  onOpen?: (concern: Concern) => void;
 };
 
 const VISIBLE = 9;
 
-export default function LiveStream({ concerns }: Props) {
+export default function LiveStream({ concerns, solutions = [], onOpen }: Props) {
+  const solCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of solutions) m.set(s.concernId, (m.get(s.concernId) ?? 0) + 1);
+    return m;
+  }, [solutions]);
+
   // we render only the most recent concerns, with the newest type-on
   const recent = useMemo(
     () => concerns.slice(-VISIBLE).reverse(),
@@ -59,8 +67,12 @@ export default function LiveStream({ concerns }: Props) {
         </div>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
-          {/* left: typewriter newest entry */}
-          <div className="border border-bone/15 bg-ink p-7 sm:p-10">
+          {/* left: typewriter newest entry — clickable */}
+          <button
+            type="button"
+            onClick={() => recent[0] && onOpen?.(recent[0])}
+            className="group cursor-pointer border border-bone/15 bg-ink p-7 text-left transition hover:border-blood sm:p-10"
+          >
             <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-blood">
               ● incoming · {recent[0] ? findCountry(recent[0].countryCode)?.name : "…"} · age{" "}
               {recent[0]?.age ?? "—"}
@@ -69,11 +81,16 @@ export default function LiveStream({ concerns }: Props) {
               <span>{typed || "—"}</span>
               <span className="feed-caret" />
             </p>
-            <div className="mt-8 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/45">
-              entry № {(concerns.length).toString().padStart(6, "0")} · received{" "}
-              {mounted && recent[0] ? new Date(recent[0].ts).toLocaleTimeString("en-GB") : "—"}
+            <div className="mt-8 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-bone/45">
+              <span>
+                entry № {(concerns.length).toString().padStart(6, "0")} · received{" "}
+                {mounted && recent[0] ? new Date(recent[0].ts).toLocaleTimeString("en-GB") : "—"}
+              </span>
+              <span className="text-amber transition group-hover:text-bone">
+                offer a response →
+              </span>
             </div>
-          </div>
+          </button>
 
           {/* right: scrolling list */}
           <div className="relative overflow-hidden border border-bone/15 bg-ink/60">
@@ -81,24 +98,36 @@ export default function LiveStream({ concerns }: Props) {
             <div className="absolute inset-x-0 bottom-0 z-10 h-12 bg-gradient-to-t from-ink-soft to-transparent" />
             <div className="max-h-[26rem] space-y-0 overflow-hidden">
               <AnimatePresence initial={false}>
-                {recent.slice(1).map((c) => (
-                  <motion.div
-                    key={c.id}
-                    layout
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="border-b border-bone/10 px-5 py-4"
-                  >
-                    <div className="font-mono text-[9px] uppercase tracking-[0.25em] text-bone/55">
-                      [{findCountry(c.countryCode)?.name ?? c.countryCode} · {c.age}]
-                    </div>
-                    <p className="mt-1.5 font-mono text-[12.5px] leading-snug text-bone/90">
-                      {c.text}
-                    </p>
-                  </motion.div>
-                ))}
+                {recent.slice(1).map((c) => {
+                  const n = solCounts.get(c.id) ?? 0;
+                  return (
+                    <motion.button
+                      key={c.id}
+                      type="button"
+                      onClick={() => onOpen?.(c)}
+                      layout
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="block w-full cursor-pointer border-b border-bone/10 px-5 py-4 text-left transition hover:bg-blood/10"
+                    >
+                      <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.25em] text-bone/55">
+                        <span>
+                          [{findCountry(c.countryCode)?.name ?? c.countryCode} · {c.age}]
+                        </span>
+                        {n > 0 && (
+                          <span className="text-amber">
+                            {n} response{n === 1 ? "" : "s"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1.5 font-mono text-[12.5px] leading-snug text-bone/90">
+                        {c.text}
+                      </p>
+                    </motion.button>
+                  );
+                })}
               </AnimatePresence>
             </div>
           </div>

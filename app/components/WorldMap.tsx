@@ -14,6 +14,7 @@ const TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.
 
 type Props = {
   concerns: Concern[];
+  onOpen?: (concern: Concern) => void;
 };
 
 // jitter a fixed seed offset for each concern so multiple from same country don't stack
@@ -25,7 +26,7 @@ function hashOffset(id: string): [number, number] {
   return [(a - 0.5) * 5, (b - 0.5) * 4];
 }
 
-export default function WorldMap({ concerns }: Props) {
+export default function WorldMap({ concerns, onOpen }: Props) {
   const [topo, setTopo] = useState<FeatureCollection<Geometry> | null>(null);
   const [hover, setHover] = useState<Concern | null>(null);
   const [size, setSize] = useState({ w: 1100, h: 600 });
@@ -186,6 +187,7 @@ export default function WorldMap({ concerns }: Props) {
                   transform={`translate(${x},${y})`}
                   onMouseEnter={() => setHover(c)}
                   onMouseLeave={() => setHover((h) => (h?.id === c.id ? null : h))}
+                  onClick={() => onOpen?.(c)}
                   style={{ cursor: "pointer" }}
                 >
                   {recent && (

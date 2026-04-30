@@ -51,7 +51,7 @@ export default function GenerationalDivide({ concerns }: Props) {
         <div className="flex items-end justify-between border-b border-ink/15 pb-4">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink/60">
-              § 06 — the generational divide
+              § 07 — the generational divide
             </div>
             <h2 className="mt-3 font-serif text-4xl italic leading-tight sm:text-5xl">
               the young fear differently than the old.

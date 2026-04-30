@@ -69,3 +69,13 @@ export type Concern = {
   category: ConcernCategory;
   ts: number; // unix ms
 };
+
+export type Solution = {
+  id: string;
+  concernId: string;
+  age: number;
+  bracket: AgeBracket;
+  countryCode: string;
+  text: string;
+  ts: number;
+};
