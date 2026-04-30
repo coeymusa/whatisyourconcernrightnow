@@ -28,6 +28,7 @@ export default function Home() {
     <main className="bg-ink text-bone">
       <Globe
         concerns={concerns}
+        solutions={solutions}
         totalCountries={countries}
         responses={solutions.length}
         onSubmit={submit}

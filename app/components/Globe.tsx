@@ -9,6 +9,9 @@ import { motion, AnimatePresence } from "motion/react";
 import type { Concern, ConcernCategory } from "../lib/types";
 import { COUNTRIES, findCountry } from "../lib/countries";
 import QuickAdd from "./QuickAdd";
+import CountryLens from "./CountryLens";
+import DonateLink from "./DonateLink";
+import type { Solution } from "../lib/types";
 
 const TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -39,6 +42,7 @@ type Bubble = {
 
 type Props = {
   concerns: Concern[];
+  solutions: Solution[];
   totalCountries: number;
   responses: number;
   onSubmit: (input: {
@@ -60,6 +64,7 @@ function distance(ax: number, ay: number, bx: number, by: number) {
 
 export default function Globe({
   concerns,
+  solutions,
   totalCountries,
   responses,
   onSubmit,
@@ -69,7 +74,12 @@ export default function Globe({
   const [size, setSize] = useState({ w: 1200, h: 720 });
   const [topo, setTopo] = useState<FeatureCollection<Geometry> | null>(null);
   const [hoverCountry, setHoverCountry] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [pings, setPings] = useState<{ id: string; x: number; y: number }[]>([]);
+
+  const selectCountry = useCallback((code: string | null) => {
+    setSelectedCountry(code);
+  }, []);
 
   // resize
   useEffect(() => {
@@ -232,8 +242,10 @@ export default function Globe({
           flavor: "yours",
         },
       ]);
+      // gently surface the country lens after the celebration animation lands
+      window.setTimeout(() => selectCountry(input.countryCode), 1400);
     },
-    [onSubmit, countryPoint],
+    [onSubmit, countryPoint, selectCountry],
   );
 
   // dot positions (rounded)
@@ -276,7 +288,8 @@ export default function Globe({
           what is your <span className="text-blood">concern</span>, right now?
         </h1>
 
-        <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/70">
+        <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/70">
+          <DonateLink variant="compact" />
           <button
             onClick={() => {
               const url = "https://whatisyourconcernrightnow.com";
@@ -344,16 +357,27 @@ export default function Globe({
                 const m49 = String((f as { id?: string | number }).id ?? "").padStart(3, "0");
                 const iso = M49_TO_ISO2[m49];
                 const isHover = iso && hoverCountry === iso;
+                const isSelected = iso && selectedCountry === iso;
                 return (
                   <path
                     key={i}
                     d={pathGen(f) ?? ""}
                     className={`country-base ${isHover ? "country-hover" : ""}`}
-                    fill={isHover ? "rgba(199,50,27,0.16)" : "rgba(250,246,237,0.025)"}
-                    stroke={
-                      isHover ? "rgba(255,138,110,0.55)" : "rgba(250,246,237,0.16)"
+                    fill={
+                      isSelected
+                        ? "rgba(199,50,27,0.32)"
+                        : isHover
+                          ? "rgba(199,50,27,0.16)"
+                          : "rgba(250,246,237,0.025)"
                     }
-                    strokeWidth={isHover ? 0.9 : 0.55}
+                    stroke={
+                      isSelected
+                        ? "rgba(255,138,110,0.85)"
+                        : isHover
+                          ? "rgba(255,138,110,0.55)"
+                          : "rgba(250,246,237,0.16)"
+                    }
+                    strokeWidth={isSelected ? 1.2 : isHover ? 0.9 : 0.55}
                     onMouseEnter={() => iso && setHoverCountry(iso)}
                     onMouseLeave={() =>
                       setHoverCountry((p) => (p === iso ? null : p))
@@ -361,10 +385,7 @@ export default function Globe({
                     style={{ cursor: iso ? "pointer" : "default" }}
                     onClick={() => {
                       if (!iso) return;
-                      const c = concerns
-                        .filter((x) => x.countryCode === iso)
-                        .slice(-1)[0];
-                      if (c) onOpen(c);
+                      selectCountry(iso);
                     }}
                   />
                 );
@@ -374,20 +395,32 @@ export default function Globe({
 
           {/* concern dots */}
           <g>
-            {plotted.map(({ c, x, y }) => (
-              <g
-                key={c.id}
-                transform={`translate(${x},${y})`}
-                style={{ cursor: "pointer" }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpen(c);
-                }}
-              >
-                <circle r={5.5} fill="url(#dotGradG)" opacity={0.55} />
-                <circle r={1.4} fill="#ffb19a" opacity={0.9} />
-              </g>
-            ))}
+            {plotted.map(({ c, x, y }) => {
+              const inSelection = c.countryCode === selectedCountry;
+              return (
+                <g
+                  key={c.id}
+                  transform={`translate(${x},${y})`}
+                  style={{ cursor: "pointer" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpen(c);
+                    selectCountry(c.countryCode);
+                  }}
+                >
+                  <circle
+                    r={inSelection ? 7 : 5.5}
+                    fill="url(#dotGradG)"
+                    opacity={inSelection ? 0.85 : 0.55}
+                  />
+                  <circle
+                    r={inSelection ? 1.8 : 1.4}
+                    fill="#ffb19a"
+                    opacity={inSelection ? 1 : 0.9}
+                  />
+                </g>
+              );
+            })}
           </g>
 
           {/* user submit pings */}
@@ -413,7 +446,10 @@ export default function Globe({
               <BubbleCard
                 key={b.id}
                 bubble={b}
-                onClick={() => onOpen(b.concern)}
+                onClick={() => {
+                  onOpen(b.concern);
+                  selectCountry(b.concern.countryCode);
+                }}
               />
             ))}
           </AnimatePresence>
@@ -460,6 +496,17 @@ export default function Globe({
       <div className="relative z-30">
         <QuickAdd onSubmit={handleSubmitConcern} />
       </div>
+
+      {/* country lens — slides in over the right side */}
+      <CountryLens
+        open={!!selectedCountry}
+        selectedCountry={selectedCountry}
+        concerns={concerns}
+        solutions={solutions}
+        onSelectCountry={selectCountry}
+        onClose={() => selectCountry(null)}
+        onOpenConcern={onOpen}
+      />
     </section>
   );
 }

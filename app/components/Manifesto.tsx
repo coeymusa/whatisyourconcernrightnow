@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import DonateLink from "./DonateLink";
 
 export default function Manifesto() {
   return (
@@ -54,6 +55,10 @@ export default function Manifesto() {
               whatisyourconcernrightnow.com — pass it along.
             </p>
           </div>
+        </div>
+
+        <div className="mt-12 flex justify-start">
+          <DonateLink variant="block" />
         </div>
 
         <div className="mt-16 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-bone/40">
