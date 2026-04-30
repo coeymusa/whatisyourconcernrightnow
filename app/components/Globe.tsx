@@ -19,9 +19,9 @@ import type { Topology, GeometryCollection } from "topojson-specification";
 import { motion, AnimatePresence } from "motion/react";
 import type { Concern, ConcernCategory, Solution } from "../lib/types";
 import { COUNTRIES, findCountry } from "../lib/countries";
-import QuickAdd from "./QuickAdd";
 import CountryLens from "./CountryLens";
 import DonateLink from "./DonateLink";
+import PostDialog from "./PostDialog";
 
 const TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -83,12 +83,35 @@ function distance(ax: number, ay: number, bx: number, by: number) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+// True if (lon, lat) is on the front hemisphere of an orthographic projection.
+// d3-geo's `projection.rotate()` returns [lambda, phi, gamma] — the geographic
+// projection center is at (-lambda, -phi). A point is visible iff the great-
+// circle angular distance to that center is < 90°.
+function isFrontHemisphere(
+  projection: GeoProjection,
+  lon: number,
+  lat: number,
+): boolean {
+  const rot = projection.rotate();
+  const lambda0 = -rot[0];
+  const phi0 = -rot[1];
+  const toRad = Math.PI / 180;
+  const cosC =
+    Math.sin(phi0 * toRad) * Math.sin(lat * toRad) +
+    Math.cos(phi0 * toRad) *
+      Math.cos(lat * toRad) *
+      Math.cos((lon - lambda0) * toRad);
+  // strict > 0 hides exactly-on-the-limb points, which look glitchy
+  return cosC > 0.02;
+}
+
 // project lon/lat through current projection — null if on far hemisphere
 function projectIfVisible(
   projection: GeoProjection,
   lon: number,
   lat: number,
 ): [number, number] | null {
+  if (!isFrontHemisphere(projection, lon, lat)) return null;
   const p = projection([lon, lat]);
   if (!p || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) return null;
   return [p[0], p[1]];
@@ -108,11 +131,13 @@ export default function Globe({
   const [hoverCountry, setHoverCountry] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [pings, setPings] = useState<{ id: string; x: number; y: number }[]>([]);
+  const [postOpen, setPostOpen] = useState(false);
 
   // sphere camera state
   const [rotation, setRotation] = useState<[number, number]>(INITIAL_ROTATION);
   const [scaleFactor, setScaleFactor] = useState(1);
   const isDraggingRef = useRef(false);
+  const dragMovedRef = useRef(false);
 
   const selectCountry = useCallback((code: string | null) => {
     setSelectedCountry(code);
@@ -197,16 +222,15 @@ export default function Globe({
     concernsRef.current = concerns;
   }, [concerns]);
 
-  // remove bubbles whose country has rotated to the back
+  // remove bubbles whose country has rotated to the back hemisphere
   useEffect(() => {
     setBubbles((prev) => {
       return prev.filter((b) => {
         const country = findCountry(b.concern.countryCode);
         if (!country) return false;
-        return projection([country.lon, country.lat]) !== null;
+        return isFrontHemisphere(projection, country.lon, country.lat);
       });
     });
-    // re-runs whenever rotation/projection changes
   }, [projection]);
 
   useEffect(() => {
@@ -278,18 +302,17 @@ export default function Globe({
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      // ignore right-click and modifier-clicks
       if (e.button !== 0) return;
-      // don't initiate drag on country/dot click — those have stopPropagation
       isDraggingRef.current = true;
+      dragMovedRef.current = false;
       dragRef.current = {
         x: e.clientX,
         y: e.clientY,
         rot: [...rotation] as [number, number],
       };
-      (e.currentTarget as Element & { setPointerCapture?: (id: number) => void }).setPointerCapture?.(
-        e.pointerId,
-      );
+      (e.currentTarget as Element & {
+        setPointerCapture?: (id: number) => void;
+      }).setPointerCapture?.(e.pointerId);
     },
     [rotation],
   );
@@ -298,18 +321,19 @@ export default function Globe({
     if (!dragRef.current) return;
     const dx = e.clientX - dragRef.current.x;
     const dy = e.clientY - dragRef.current.y;
+    // even tiny motion above the deadband counts as a drag (suppress click)
+    if (Math.abs(dx) + Math.abs(dy) > 4) dragMovedRef.current = true;
     const k = ROTATE_SENSITIVITY / Math.max(0.5, scaleFactor);
     const newLambda = dragRef.current.rot[0] + dx * k;
-    const newPhi = Math.max(
-      -88,
-      Math.min(88, dragRef.current.rot[1] - dy * k),
-    );
+    const newPhi = Math.max(-88, Math.min(88, dragRef.current.rot[1] - dy * k));
     setRotation([newLambda, newPhi]);
   }, [scaleFactor]);
 
   const onPointerUp = useCallback(() => {
     dragRef.current = null;
     isDraggingRef.current = false;
+    // dragMovedRef intentionally NOT reset here — click handlers fire next and
+    // need to see whether the gesture moved. We reset on the next pointerdown.
   }, []);
 
   // wheel zoom
@@ -450,7 +474,7 @@ export default function Globe({
           what is your <span className="text-blood">concern</span>, right now?
         </h1>
 
-        <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/70">
+        <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/70 sm:gap-4">
           <DonateLink variant="compact" />
           <button
             onClick={() => {
@@ -466,6 +490,12 @@ export default function Globe({
             className="hidden border border-bone/30 px-3 py-1.5 transition hover:border-blood hover:text-blood sm:inline-block"
           >
             share ↗
+          </button>
+          <button
+            onClick={() => setPostOpen(true)}
+            className="bg-blood px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-bone transition hover:bg-bone hover:text-blood sm:px-4 sm:py-2"
+          >
+            + post yours
           </button>
         </div>
       </div>
@@ -596,8 +626,8 @@ export default function Globe({
                     setHoverCountry((p) => (p === iso ? null : p))
                   }
                   style={{ cursor: iso ? "pointer" : "default" }}
-                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
+                    if (dragMovedRef.current) return;
                     e.stopPropagation();
                     if (iso) selectCountry(iso);
                   }}
@@ -605,34 +635,38 @@ export default function Globe({
               );
             })}
 
-          {/* dots */}
-          {plotted.map(({ c, x, y }) => {
-            const inSel = c.countryCode === selectedCountry;
-            return (
-              <g
-                key={c.id}
-                transform={`translate(${x},${y})`}
-                style={{ cursor: "pointer" }}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpen(c);
-                  selectCountry(c.countryCode);
-                }}
-              >
-                <circle
-                  r={inSel ? 7 : 5.5}
-                  fill="url(#dotGradG2)"
-                  opacity={inSel ? 0.95 : 0.6}
-                />
-                <circle
-                  r={inSel ? 1.8 : 1.4}
-                  fill="#ffb19a"
-                  opacity={inSel ? 1 : 0.92}
-                />
-              </g>
-            );
-          })}
+          {/* dots — sized in proportion to the globe so they scale with zoom */}
+          {(() => {
+            const dotRadius = Math.max(2.2, globeRadius * 0.014);
+            const innerRadius = Math.max(0.8, globeRadius * 0.0035);
+            return plotted.map(({ c, x, y }) => {
+              const inSel = c.countryCode === selectedCountry;
+              return (
+                <g
+                  key={c.id}
+                  transform={`translate(${x},${y})`}
+                  style={{ cursor: "pointer" }}
+                  onClick={(e) => {
+                    if (dragMovedRef.current) return;
+                    e.stopPropagation();
+                    onOpen(c);
+                    selectCountry(c.countryCode);
+                  }}
+                >
+                  <circle
+                    r={dotRadius * (inSel ? 1.35 : 1)}
+                    fill="url(#dotGradG2)"
+                    opacity={inSel ? 0.95 : 0.6}
+                  />
+                  <circle
+                    r={innerRadius * (inSel ? 1.4 : 1)}
+                    fill="#ffb19a"
+                    opacity={inSel ? 1 : 0.92}
+                  />
+                </g>
+              );
+            });
+          })()}
 
           {/* user submit pings */}
           {pings.map((p) => (
@@ -678,7 +712,7 @@ export default function Globe({
             {bubbles.map((b) => {
               const country = findCountry(b.concern.countryCode);
               if (!country) return null;
-              const p = projection([country.lon, country.lat]);
+              const p = projectIfVisible(projection, country.lon, country.lat);
               if (!p) return null;
               return (
                 <BubbleCard
@@ -762,11 +796,6 @@ export default function Globe({
         </div>
       </div>
 
-      {/* persistent quick add */}
-      <div className="relative z-30">
-        <QuickAdd onSubmit={handleSubmitConcern} />
-      </div>
-
       {/* country lens overlay */}
       <CountryLens
         open={!!selectedCountry}
@@ -776,6 +805,13 @@ export default function Globe({
         onSelectCountry={selectCountry}
         onClose={() => selectCountry(null)}
         onOpenConcern={onOpen}
+      />
+
+      {/* post dialog */}
+      <PostDialog
+        open={postOpen}
+        onClose={() => setPostOpen(false)}
+        onSubmit={handleSubmitConcern}
       />
     </section>
   );

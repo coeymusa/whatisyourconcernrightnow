@@ -2,10 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Globe from "./components/Globe";
-import LiveStream from "./components/LiveStream";
-import ResponseFeed from "./components/ResponseFeed";
-import ConcernIndex from "./components/ConcernIndex";
-import GenerationalDivide from "./components/GenerationalDivide";
+import Explore from "./components/Explore";
 import Manifesto from "./components/Manifesto";
 import EntryDrawer from "./components/EntryDrawer";
 import { useConcernRecord } from "./lib/store";
@@ -34,10 +31,7 @@ export default function Home() {
         onSubmit={submit}
         onOpen={open}
       />
-      <LiveStream concerns={concerns} solutions={solutions} onOpen={open} />
-      <ResponseFeed concerns={concerns} solutions={solutions} onOpen={open} />
-      <ConcernIndex concerns={concerns} />
-      <GenerationalDivide concerns={concerns} />
+      <Explore concerns={concerns} solutions={solutions} onOpen={open} />
       <Manifesto />
 
       <EntryDrawer
