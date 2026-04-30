@@ -52,7 +52,7 @@ export default function Manifesto() {
           <div>
             <div className="text-bone/40">share</div>
             <p className="mt-2 leading-relaxed text-bone/75">
-              whatisyourconcernrightnow.com — pass it along.
+              whatisyourconcern.com — pass it along.
             </p>
           </div>
         </div>

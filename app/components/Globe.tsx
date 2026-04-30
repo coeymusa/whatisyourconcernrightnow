@@ -454,7 +454,7 @@ export default function Globe({
           <DonateLink variant="compact" />
           <button
             onClick={() => {
-              const url = "https://whatisyourconcernrightnow.com";
+              const url = "https://whatisyourconcern.com";
               if (typeof navigator !== "undefined" && navigator.share) {
                 navigator
                   .share({ title: "what is your concern, right now?", url })

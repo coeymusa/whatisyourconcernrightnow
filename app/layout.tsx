@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://whatisyourconcernrightnow.com"),
+  metadataBase: new URL("https://whatisyourconcern.com"),
   title: "what is your concern, right now?",
   description:
     "An anonymous global record of what humanity is afraid of, right now. Add your voice. The world is listening.",

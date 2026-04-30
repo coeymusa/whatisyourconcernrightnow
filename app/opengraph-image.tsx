@@ -90,7 +90,7 @@ export default async function OG() {
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span style={{ color: "rgba(250,246,237,0.5)" }}>add your voice</span>
             <span style={{ fontSize: 22, color: "#faf6ed" }}>
-              whatisyourconcernrightnow.com
+              whatisyourconcern.com
             </span>
           </div>
           <div style={{ display: "flex", gap: 24 }}>

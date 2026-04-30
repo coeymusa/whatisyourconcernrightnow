@@ -1,4 +1,4 @@
--- Schema for whatisyourconcernrightnow.com
+-- Schema for whatisyourconcern.com
 -- Run this in the Supabase SQL editor.
 
 create table if not exists public.concerns (

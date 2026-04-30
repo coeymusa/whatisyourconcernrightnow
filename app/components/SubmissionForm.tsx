@@ -273,7 +273,7 @@ function Receipt({
           </button>
           <button
             onClick={() => {
-              const url = "https://whatisyourconcernrightnow.com";
+              const url = "https://whatisyourconcern.com";
               if (typeof navigator !== "undefined" && navigator.share) {
                 navigator
                   .share({
