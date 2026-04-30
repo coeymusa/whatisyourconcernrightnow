@@ -1,22 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { geoEqualEarth, geoPath, geoGraticule10 } from "d3-geo";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  geoOrthographic,
+  geoPath,
+  geoGraticule10,
+  type GeoProjection,
+} from "d3-geo";
 import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import { motion, AnimatePresence } from "motion/react";
-import type { Concern, ConcernCategory } from "../lib/types";
+import type { Concern, ConcernCategory, Solution } from "../lib/types";
 import { COUNTRIES, findCountry } from "../lib/countries";
 import QuickAdd from "./QuickAdd";
 import CountryLens from "./CountryLens";
 import DonateLink from "./DonateLink";
-import type { Solution } from "../lib/types";
 
 const TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-// world-atlas country numeric IDs (M49) → ISO-2 — only the codes we care about for hover.
-// Faster than fetching another mapping; we just match by name when needed.
 const M49_TO_ISO2: Record<string, string> = {
   "840": "US","124": "CA","484": "MX","076": "BR","032": "AR","152": "CL","170": "CO",
   "604": "PE","862": "VE","826": "GB","372": "IE","250": "FR","276": "DE","724": "ES",
@@ -33,10 +41,8 @@ const M49_TO_ISO2: Record<string, string> = {
 type Bubble = {
   id: string;
   concern: Concern;
-  x: number;
-  y: number;
   bornAt: number;
-  ttl: number; // ms
+  ttl: number;
   flavor: "ambient" | "yours";
 };
 
@@ -54,12 +60,38 @@ type Props = {
   onOpen: (c: Concern) => void;
 };
 
-const MIN_BUBBLE_GAP = 200; // px
+const MIN_BUBBLE_GAP = 200;
+const ROTATE_SENSITIVITY = 0.32;
+const MIN_SCALE_FACTOR = 0.78;
+const MAX_SCALE_FACTOR = 2.4;
+const INITIAL_ROTATION: [number, number] = [-15, -18];
+
+// deterministic pseudo-random for stars
+function det(i: number): number {
+  let x = (i * 2654435761) >>> 0;
+  x ^= x >>> 16;
+  x = Math.imul(x, 2246822507);
+  x ^= x >>> 13;
+  x = Math.imul(x, 3266489909);
+  x ^= x >>> 16;
+  return (x >>> 0) / 0xffffffff;
+}
 
 function distance(ax: number, ay: number, bx: number, by: number) {
   const dx = ax - bx;
   const dy = ay - by;
   return Math.sqrt(dx * dx + dy * dy);
+}
+
+// project lon/lat through current projection — null if on far hemisphere
+function projectIfVisible(
+  projection: GeoProjection,
+  lon: number,
+  lat: number,
+): [number, number] | null {
+  const p = projection([lon, lat]);
+  if (!p || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) return null;
+  return [p[0], p[1]];
 }
 
 export default function Globe({
@@ -77,11 +109,16 @@ export default function Globe({
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [pings, setPings] = useState<{ id: string; x: number; y: number }[]>([]);
 
+  // sphere camera state
+  const [rotation, setRotation] = useState<[number, number]>(INITIAL_ROTATION);
+  const [scaleFactor, setScaleFactor] = useState(1);
+  const isDraggingRef = useRef(false);
+
   const selectCountry = useCallback((code: string | null) => {
     setSelectedCountry(code);
   }, []);
 
-  // resize
+  // resize observer
   useEffect(() => {
     if (!wrapRef.current) return;
     const obs = new ResizeObserver((entries) => {
@@ -114,70 +151,108 @@ export default function Globe({
     };
   }, []);
 
+  // globe radius and center
+  const globeRadius = useMemo(() => {
+    const base = Math.min(size.w, size.h) * 0.44;
+    return Math.max(160, base * scaleFactor);
+  }, [size.w, size.h, scaleFactor]);
+
+  const center = useMemo<[number, number]>(
+    () => [size.w / 2, size.h / 2 + 8],
+    [size.w, size.h],
+  );
+
+  // projection (orthographic = sphere)
   const projection = useMemo(
     () =>
-      geoEqualEarth()
-        .scale(Math.min(size.w / 6.0, size.h / 3.4))
-        .translate([size.w / 2, size.h / 2 - 10]),
-    [size.w, size.h],
+      geoOrthographic()
+        .scale(globeRadius)
+        .translate(center)
+        .rotate([rotation[0], rotation[1]])
+        .clipAngle(90),
+    [globeRadius, center, rotation],
   );
 
   const pathGen = useMemo(() => geoPath(projection), [projection]);
   const graticule = useMemo(() => geoGraticule10(), []);
 
-  // map of country code -> [x, y] on screen (rounded to 2 dp to dodge SSR drift)
-  const countryPoint = useCallback(
-    (code: string): [number, number] | null => {
-      const c = findCountry(code);
-      if (!c) return null;
-      const p = projection([c.lon, c.lat]);
-      if (!p) return null;
-      return [Math.round(p[0] * 100) / 100, Math.round(p[1] * 100) / 100];
-    },
-    [projection],
-  );
+  // stars layer (computed once, deterministic)
+  const stars = useMemo(() => {
+    const arr: { x: number; y: number; r: number; o: number }[] = [];
+    for (let i = 0; i < 220; i++) {
+      arr.push({
+        x: det(i + 1100) * 100,
+        y: det(i + 2200) * 100,
+        r: 0.4 + det(i + 3300) * 1.0,
+        o: 0.25 + det(i + 4400) * 0.5,
+      });
+    }
+    return arr;
+  }, []);
 
-  // bubble cycling — only runs after projection is ready
+  // ----- Bubble cycling --------------------------------------------------
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const concernsRef = useRef<Concern[]>(concerns);
   useEffect(() => {
     concernsRef.current = concerns;
   }, [concerns]);
 
+  // remove bubbles whose country has rotated to the back
+  useEffect(() => {
+    setBubbles((prev) => {
+      return prev.filter((b) => {
+        const country = findCountry(b.concern.countryCode);
+        if (!country) return false;
+        return projection([country.lon, country.lat]) !== null;
+      });
+    });
+    // re-runs whenever rotation/projection changes
+  }, [projection]);
+
   useEffect(() => {
     let cancelled = false;
     const isSmall = size.w < 700;
-    const maxBubbles = isSmall ? 2 : 4;
+    const maxBubbles = isSmall ? 2 : 3;
 
     function tick() {
       if (cancelled) return;
       const now = Date.now();
       setBubbles((prev) => {
-        // remove expired
         const live = prev.filter((b) => now - b.bornAt < b.ttl);
-
         if (live.length >= maxBubbles) return live;
 
-        const concerns = concernsRef.current;
-        if (concerns.length === 0) return live;
+        const all = concernsRef.current;
+        if (all.length === 0) return live;
 
-        // try several random picks for spacing
-        for (let attempt = 0; attempt < 14; attempt++) {
-          const c = concerns[Math.floor(Math.random() * concerns.length)];
+        for (let attempt = 0; attempt < 18; attempt++) {
+          const c = all[Math.floor(Math.random() * all.length)];
           if (live.some((b) => b.concern.id === c.id)) continue;
-          const pt = countryPoint(c.countryCode);
-          if (!pt) continue;
-          const [x, y] = pt;
-          // require padding from edges so bubble fits on screen
-          if (x < 130 || x > size.w - 130 || y < 130 || y > size.h - 80) continue;
-          if (live.some((b) => distance(b.x, b.y, x, y) < MIN_BUBBLE_GAP)) continue;
+          const country = findCountry(c.countryCode);
+          if (!country) continue;
+          const p = projectIfVisible(projection, country.lon, country.lat);
+          if (!p) continue;
+          const [x, y] = p;
+          if (
+            x < 130 ||
+            x > size.w - 130 ||
+            y < 110 ||
+            y > size.h - 60
+          )
+            continue;
+          // ensure spacing from existing bubbles (re-project them)
+          const conflict = live.some((b) => {
+            const bc = findCountry(b.concern.countryCode);
+            if (!bc) return false;
+            const bp = projection([bc.lon, bc.lat]);
+            if (!bp) return false;
+            return distance(bp[0], bp[1], x, y) < MIN_BUBBLE_GAP;
+          });
+          if (conflict) continue;
           return [
             ...live,
             {
               id: `bubble-${now}-${attempt}`,
               concern: c,
-              x,
-              y,
               bornAt: now,
               ttl: 6500 + Math.random() * 2500,
               flavor: "ambient",
@@ -187,78 +262,158 @@ export default function Globe({
         return live;
       });
 
-      const nextDelay = 1300 + Math.random() * 1400;
+      const nextDelay = 1500 + Math.random() * 1500;
       window.setTimeout(tick, nextDelay);
     }
 
-    const t0 = window.setTimeout(tick, 700);
+    const t0 = window.setTimeout(tick, 800);
     return () => {
       cancelled = true;
       window.clearTimeout(t0);
     };
-    // re-run when projection size changes meaningfully
-  }, [size.w, size.h, countryPoint]);
+  }, [size.w, size.h, projection]);
 
-  // when user submits, ping their country and surface a "yours" bubble
+  // ----- Drag interactions ----------------------------------------------
+  const dragRef = useRef<{ x: number; y: number; rot: [number, number] } | null>(null);
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      // ignore right-click and modifier-clicks
+      if (e.button !== 0) return;
+      // don't initiate drag on country/dot click — those have stopPropagation
+      isDraggingRef.current = true;
+      dragRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        rot: [...rotation] as [number, number],
+      };
+      (e.currentTarget as Element & { setPointerCapture?: (id: number) => void }).setPointerCapture?.(
+        e.pointerId,
+      );
+    },
+    [rotation],
+  );
+
+  const onPointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragRef.current) return;
+    const dx = e.clientX - dragRef.current.x;
+    const dy = e.clientY - dragRef.current.y;
+    const k = ROTATE_SENSITIVITY / Math.max(0.5, scaleFactor);
+    const newLambda = dragRef.current.rot[0] + dx * k;
+    const newPhi = Math.max(
+      -88,
+      Math.min(88, dragRef.current.rot[1] - dy * k),
+    );
+    setRotation([newLambda, newPhi]);
+  }, [scaleFactor]);
+
+  const onPointerUp = useCallback(() => {
+    dragRef.current = null;
+    isDraggingRef.current = false;
+  }, []);
+
+  // wheel zoom
+  const onWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setScaleFactor((s) => {
+      const factor = Math.exp(-e.deltaY * 0.0014);
+      return Math.max(MIN_SCALE_FACTOR, Math.min(MAX_SCALE_FACTOR, s * factor));
+    });
+  }, []);
+
+  // attach a non-passive wheel listener so preventDefault works
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      setScaleFactor((s) => {
+        const factor = Math.exp(-e.deltaY * 0.0014);
+        return Math.max(MIN_SCALE_FACTOR, Math.min(MAX_SCALE_FACTOR, s * factor));
+      });
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, []);
+
+  // animate rotation toward a target country (used on lens select)
+  const animRef = useRef<number | null>(null);
+  const animateToCountry = useCallback((code: string) => {
+    const c = findCountry(code);
+    if (!c) return;
+    // orthographic rotate is [-lon, -lat] to face point
+    const target: [number, number] = [-c.lon, -c.lat];
+    const startTime = performance.now();
+    const duration = 850;
+    if (animRef.current) cancelAnimationFrame(animRef.current);
+    setRotation((current) => {
+      const start = current;
+      // shortest angular path for lambda
+      let dl = target[0] - start[0];
+      while (dl > 180) dl -= 360;
+      while (dl < -180) dl += 360;
+      const dp = target[1] - start[1];
+
+      const step = (now: number) => {
+        const t = Math.min(1, (now - startTime) / duration);
+        // ease-out cubic
+        const eased = 1 - Math.pow(1 - t, 3);
+        setRotation([start[0] + dl * eased, start[1] + dp * eased]);
+        if (t < 1) {
+          animRef.current = requestAnimationFrame(step);
+        } else {
+          animRef.current = null;
+        }
+      };
+      animRef.current = requestAnimationFrame(step);
+      return start;
+    });
+  }, []);
+
+  // when user selects a country (via lens or click) — pan globe to it
+  useEffect(() => {
+    if (selectedCountry) animateToCountry(selectedCountry);
+    return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+    };
+  }, [selectedCountry, animateToCountry]);
+
+  // ----- Submit & ping --------------------------------------------------
   const handleSubmitConcern = useCallback(
     (input: { age: number; countryCode: string; text: string; category: ConcernCategory }) => {
       onSubmit(input);
-      const pt = countryPoint(input.countryCode);
-      if (!pt) return;
-      const [x, y] = pt;
-      const id = `ping-${Date.now()}`;
-      setPings((p) => [...p, { id, x, y }]);
-      window.setTimeout(() => {
-        setPings((p) => p.filter((q) => q.id !== id));
-      }, 1500);
-      // briefly show their concern as a bubble
-      const concern: Concern = {
-        id: `you-${Date.now()}`,
-        age: input.age,
-        bracket:
-          input.age < 20
-            ? "13–19"
-            : input.age < 30
-              ? "20–29"
-              : input.age < 45
-                ? "30–44"
-                : input.age < 60
-                  ? "45–59"
-                  : "60+",
-        countryCode: input.countryCode,
-        text: input.text,
-        category: input.category,
-        ts: Date.now(),
-      };
-      setBubbles((prev) => [
-        ...prev,
-        {
-          id: `yours-${Date.now()}`,
-          concern,
-          x,
-          y,
-          bornAt: Date.now(),
-          ttl: 9000,
-          flavor: "yours",
-        },
-      ]);
-      // gently surface the country lens after the celebration animation lands
-      window.setTimeout(() => selectCountry(input.countryCode), 1400);
+      const country = findCountry(input.countryCode);
+      if (!country) return;
+      // rotate to face their country, then ping
+      animateToCountry(input.countryCode);
+      const p = projection([country.lon, country.lat]);
+      if (p) {
+        const id = `ping-${Date.now()}`;
+        setPings((q) => [...q, { id, x: p[0], y: p[1] }]);
+        window.setTimeout(() => {
+          setPings((q) => q.filter((r) => r.id !== id));
+        }, 1500);
+      }
+      // open lens after a moment
+      window.setTimeout(() => selectCountry(input.countryCode), 1300);
     },
-    [onSubmit, countryPoint, selectCountry],
+    [onSubmit, animateToCountry, projection, selectCountry],
   );
 
-  // dot positions (rounded)
+  // ----- Plotted dots (only visible side) ------------------------------
   const plotted = useMemo(() => {
     return concerns.slice(-260).map((c) => {
       const country = findCountry(c.countryCode);
       if (!country) return null;
-      // small deterministic jitter using concern id hash
       let h = 0;
       for (let i = 0; i < c.id.length; i++) h = (h * 31 + c.id.charCodeAt(i)) >>> 0;
       const dx = (((h >>> 0) % 1000) / 1000 - 0.5) * 4;
       const dy = ((((h * 7) >>> 0) % 1000) / 1000 - 0.5) * 3;
-      const p = projection([country.lon + dx * 0.5, country.lat + dy * 0.4]);
+      const p = projectIfVisible(
+        projection,
+        country.lon + dx * 0.5,
+        country.lat + dy * 0.4,
+      );
       if (!p) return null;
       return {
         c,
@@ -268,15 +423,22 @@ export default function Globe({
     }).filter(Boolean) as { c: Concern; x: number; y: number }[];
   }, [concerns, projection]);
 
-  // hover country handling for fills
+  // hover meta
   const hoverCount = useMemo(() => {
     if (!hoverCountry) return 0;
     return concerns.filter((c) => c.countryCode === hoverCountry).length;
   }, [hoverCountry, concerns]);
 
+  // sphere outline d (cheap arc)
+  const sphereOutline = useMemo(() => {
+    const [cx, cy] = center;
+    const r = globeRadius;
+    return `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
+  }, [center, globeRadius]);
+
   return (
-    <section className="relative isolate flex h-screen min-h-[680px] flex-col overflow-hidden bg-ink text-bone vignette">
-      {/* top bar */}
+    <section className="relative isolate flex h-screen min-h-[700px] flex-col overflow-hidden bg-ink text-bone">
+      {/* TOP BAR */}
       <div className="relative z-30 flex items-center justify-between border-b border-bone/10 bg-ink/40 px-5 py-3 backdrop-blur sm:px-10 sm:py-4">
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.25em] text-bone/70 sm:text-xs">
           <span className="live-dot" aria-hidden />
@@ -308,132 +470,203 @@ export default function Globe({
         </div>
       </div>
 
-      {/* the planet */}
+      {/* THE PLANET */}
       <div
         ref={wrapRef}
-        className="relative flex-1 overflow-hidden reticle-cursor"
+        className="relative flex-1 select-none overflow-hidden"
+        style={{ touchAction: "none" }}
       >
+        {/* stars */}
+        <div className="pointer-events-none absolute inset-0">
+          <svg width="100%" height="100%" preserveAspectRatio="none">
+            {stars.map((s, i) => (
+              <circle
+                key={i}
+                cx={`${s.x}%`}
+                cy={`${s.y}%`}
+                r={s.r}
+                fill="#faf6ed"
+                opacity={s.o}
+              />
+            ))}
+          </svg>
+        </div>
+
+        {/* the globe */}
         <svg
-          width="100%"
-          height="100%"
+          width={size.w}
+          height={size.h}
           viewBox={`0 0 ${size.w} ${size.h}`}
           preserveAspectRatio="xMidYMid slice"
-          className="absolute inset-0 h-full w-full"
-          aria-label="World map of concerns"
+          className={`absolute inset-0 h-full w-full ${
+            isDraggingRef.current ? "cursor-grabbing" : "cursor-grab"
+          }`}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          onPointerLeave={onPointerUp}
+          aria-label="3D globe of concerns"
         >
           <defs>
-            <radialGradient id="dotGradG" cx="50%" cy="50%" r="50%">
+            <radialGradient id="oceanG" cx="35%" cy="32%" r="68%">
+              <stop offset="0%" stopColor="#1a2235" />
+              <stop offset="55%" stopColor="#0e1623" />
+              <stop offset="100%" stopColor="#04060a" />
+            </radialGradient>
+            <radialGradient id="atmoOuterG" cx="50%" cy="50%" r="50%">
+              <stop offset="86%" stopColor="rgba(80,150,200,0)" />
+              <stop offset="93%" stopColor="rgba(120,170,230,0.32)" />
+              <stop offset="98%" stopColor="rgba(120,170,230,0.10)" />
+              <stop offset="100%" stopColor="rgba(120,170,230,0)" />
+            </radialGradient>
+            <radialGradient id="specularG" cx="32%" cy="22%" r="42%">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+            </radialGradient>
+            <radialGradient id="terminatorG" cx="100%" cy="50%" r="60%">
+              <stop offset="0%" stopColor="rgba(0,0,0,0)" />
+              <stop offset="55%" stopColor="rgba(0,0,0,0)" />
+              <stop offset="100%" stopColor="rgba(0,0,0,0.55)" />
+            </radialGradient>
+            <radialGradient id="dotGradG2" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#ff6a4d" stopOpacity="1" />
               <stop offset="55%" stopColor="#c7321b" stopOpacity="0.95" />
               <stop offset="100%" stopColor="#8a1f0c" stopOpacity="0" />
             </radialGradient>
-            <radialGradient id="atmoGradG" cx="50%" cy="50%" r="60%">
-              <stop offset="55%" stopColor="#0a0908" stopOpacity="0" />
-              <stop offset="100%" stopColor="#000" stopOpacity="0.7" />
-            </radialGradient>
-            <linearGradient id="bgFade" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0a0908" />
-              <stop offset="100%" stopColor="#08070a" />
-            </linearGradient>
           </defs>
 
-          {/* base background */}
-          <rect width={size.w} height={size.h} fill="url(#bgFade)" />
+          {/* atmospheric outer glow */}
+          <circle
+            cx={center[0]}
+            cy={center[1]}
+            r={globeRadius + 22}
+            fill="url(#atmoOuterG)"
+            pointerEvents="none"
+          />
 
-          {/* graticule */}
-          <g className="graticule celestial">
-            <path
-              d={pathGen(graticule) ?? ""}
-              fill="none"
-              stroke="rgba(250,246,237,0.06)"
-              strokeWidth={0.7}
-            />
-          </g>
+          {/* sphere ocean */}
+          <circle
+            cx={center[0]}
+            cy={center[1]}
+            r={globeRadius}
+            fill="url(#oceanG)"
+          />
+
+          {/* graticule (latitude/longitude grid) */}
+          <path
+            d={pathGen(graticule) ?? ""}
+            fill="none"
+            stroke="rgba(250,246,237,0.06)"
+            strokeWidth={0.6}
+            pointerEvents="none"
+          />
 
           {/* country fills */}
-          {topo && (
-            <g>
-              {topo.features.map((f, i) => {
-                const m49 = String((f as { id?: string | number }).id ?? "").padStart(3, "0");
-                const iso = M49_TO_ISO2[m49];
-                const isHover = iso && hoverCountry === iso;
-                const isSelected = iso && selectedCountry === iso;
-                return (
-                  <path
-                    key={i}
-                    d={pathGen(f) ?? ""}
-                    className={`country-base ${isHover ? "country-hover" : ""}`}
-                    fill={
-                      isSelected
-                        ? "rgba(199,50,27,0.32)"
-                        : isHover
-                          ? "rgba(199,50,27,0.16)"
-                          : "rgba(250,246,237,0.025)"
-                    }
-                    stroke={
-                      isSelected
-                        ? "rgba(255,138,110,0.85)"
-                        : isHover
-                          ? "rgba(255,138,110,0.55)"
-                          : "rgba(250,246,237,0.16)"
-                    }
-                    strokeWidth={isSelected ? 1.2 : isHover ? 0.9 : 0.55}
-                    onMouseEnter={() => iso && setHoverCountry(iso)}
-                    onMouseLeave={() =>
-                      setHoverCountry((p) => (p === iso ? null : p))
-                    }
-                    style={{ cursor: iso ? "pointer" : "default" }}
-                    onClick={() => {
-                      if (!iso) return;
-                      selectCountry(iso);
-                    }}
-                  />
-                );
-              })}
-            </g>
-          )}
-
-          {/* concern dots */}
-          <g>
-            {plotted.map(({ c, x, y }) => {
-              const inSelection = c.countryCode === selectedCountry;
+          {topo &&
+            topo.features.map((f, i) => {
+              const m49 = String((f as { id?: string | number }).id ?? "").padStart(3, "0");
+              const iso = M49_TO_ISO2[m49];
+              const isHover = iso && hoverCountry === iso;
+              const isSelected = iso && selectedCountry === iso;
+              const d = pathGen(f);
+              if (!d) return null;
               return (
-                <g
-                  key={c.id}
-                  transform={`translate(${x},${y})`}
-                  style={{ cursor: "pointer" }}
+                <path
+                  key={i}
+                  d={d}
+                  className="country-base"
+                  fill={
+                    isSelected
+                      ? "rgba(199,50,27,0.42)"
+                      : isHover
+                        ? "rgba(199,50,27,0.20)"
+                        : "rgba(245,234,205,0.12)"
+                  }
+                  stroke={
+                    isSelected
+                      ? "rgba(255,148,118,0.92)"
+                      : isHover
+                        ? "rgba(255,148,118,0.55)"
+                        : "rgba(245,234,205,0.20)"
+                  }
+                  strokeWidth={isSelected ? 1.2 : isHover ? 0.95 : 0.55}
+                  onMouseEnter={() => iso && setHoverCountry(iso)}
+                  onMouseLeave={() =>
+                    setHoverCountry((p) => (p === iso ? null : p))
+                  }
+                  style={{ cursor: iso ? "pointer" : "default" }}
+                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onOpen(c);
-                    selectCountry(c.countryCode);
+                    if (iso) selectCountry(iso);
                   }}
-                >
-                  <circle
-                    r={inSelection ? 7 : 5.5}
-                    fill="url(#dotGradG)"
-                    opacity={inSelection ? 0.85 : 0.55}
-                  />
-                  <circle
-                    r={inSelection ? 1.8 : 1.4}
-                    fill="#ffb19a"
-                    opacity={inSelection ? 1 : 0.9}
-                  />
-                </g>
+                />
               );
             })}
-          </g>
+
+          {/* dots */}
+          {plotted.map(({ c, x, y }) => {
+            const inSel = c.countryCode === selectedCountry;
+            return (
+              <g
+                key={c.id}
+                transform={`translate(${x},${y})`}
+                style={{ cursor: "pointer" }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpen(c);
+                  selectCountry(c.countryCode);
+                }}
+              >
+                <circle
+                  r={inSel ? 7 : 5.5}
+                  fill="url(#dotGradG2)"
+                  opacity={inSel ? 0.95 : 0.6}
+                />
+                <circle
+                  r={inSel ? 1.8 : 1.4}
+                  fill="#ffb19a"
+                  opacity={inSel ? 1 : 0.92}
+                />
+              </g>
+            );
+          })}
 
           {/* user submit pings */}
-          <g>
-            {pings.map((p) => (
-              <g key={p.id} transform={`translate(${p.x},${p.y})`} className="ping">
-                <circle r={4} fill="none" stroke="#d4a24a" strokeWidth={1.5} />
-              </g>
-            ))}
-          </g>
+          {pings.map((p) => (
+            <g key={p.id} transform={`translate(${p.x},${p.y})`} className="ping">
+              <circle r={4} fill="none" stroke="#d4a24a" strokeWidth={1.5} />
+            </g>
+          ))}
 
-          {/* atmospheric vignette */}
-          <rect width={size.w} height={size.h} fill="url(#atmoGradG)" pointerEvents="none" />
+          {/* terminator (day/night feel — subtle right-side darkening) */}
+          <circle
+            cx={center[0]}
+            cy={center[1]}
+            r={globeRadius}
+            fill="url(#terminatorG)"
+            pointerEvents="none"
+          />
+
+          {/* specular highlight */}
+          <circle
+            cx={center[0]}
+            cy={center[1]}
+            r={globeRadius}
+            fill="url(#specularG)"
+            pointerEvents="none"
+          />
+
+          {/* sphere outline */}
+          <path
+            d={sphereOutline}
+            fill="none"
+            stroke="rgba(140,180,220,0.18)"
+            strokeWidth={1}
+            pointerEvents="none"
+          />
         </svg>
 
         {/* scan line */}
@@ -442,16 +675,24 @@ export default function Globe({
         {/* HTML bubble layer */}
         <div className="pointer-events-none absolute inset-0">
           <AnimatePresence>
-            {bubbles.map((b) => (
-              <BubbleCard
-                key={b.id}
-                bubble={b}
-                onClick={() => {
-                  onOpen(b.concern);
-                  selectCountry(b.concern.countryCode);
-                }}
-              />
-            ))}
+            {bubbles.map((b) => {
+              const country = findCountry(b.concern.countryCode);
+              if (!country) return null;
+              const p = projection([country.lon, country.lat]);
+              if (!p) return null;
+              return (
+                <BubbleCard
+                  key={b.id}
+                  bubble={b}
+                  x={p[0]}
+                  y={p[1]}
+                  onClick={() => {
+                    onOpen(b.concern);
+                    selectCountry(b.concern.countryCode);
+                  }}
+                />
+              );
+            })}
           </AnimatePresence>
         </div>
 
@@ -485,10 +726,39 @@ export default function Globe({
           <span>{responses.toLocaleString()} responses</span>
         </div>
 
-        {/* scroll cue */}
-        <div className="pointer-events-none absolute bottom-32 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/55 sm:flex">
-          <span>scroll · listen deeper</span>
-          <span className="float-down text-blood">↓</span>
+        {/* gestures hint */}
+        <div className="pointer-events-none absolute left-5 top-5 z-20 hidden flex-col gap-1 font-mono text-[9px] uppercase tracking-[0.25em] text-bone/45 sm:flex">
+          <span>drag · rotate</span>
+          <span>scroll · zoom</span>
+          <span>click country · open lens</span>
+        </div>
+
+        {/* zoom pill */}
+        <div className="pointer-events-auto absolute bottom-32 right-5 z-20 hidden flex-col gap-1 font-mono text-[10px] tracking-[0.22em] text-bone/60 sm:flex">
+          <button
+            onClick={() => setScaleFactor((s) => Math.min(MAX_SCALE_FACTOR, s * 1.18))}
+            className="border border-bone/25 bg-ink/60 px-3 py-1.5 backdrop-blur transition hover:border-blood hover:text-blood"
+            aria-label="zoom in"
+          >
+            +
+          </button>
+          <button
+            onClick={() => setScaleFactor((s) => Math.max(MIN_SCALE_FACTOR, s * 0.85))}
+            className="border border-bone/25 bg-ink/60 px-3 py-1.5 backdrop-blur transition hover:border-blood hover:text-blood"
+            aria-label="zoom out"
+          >
+            −
+          </button>
+          <button
+            onClick={() => {
+              setRotation(INITIAL_ROTATION);
+              setScaleFactor(1);
+            }}
+            className="border border-bone/25 bg-ink/60 px-2 py-1 text-[8px] uppercase backdrop-blur transition hover:border-bone hover:text-bone"
+            aria-label="reset view"
+          >
+            reset
+          </button>
         </div>
       </div>
 
@@ -497,7 +767,7 @@ export default function Globe({
         <QuickAdd onSubmit={handleSubmitConcern} />
       </div>
 
-      {/* country lens — slides in over the right side */}
+      {/* country lens overlay */}
       <CountryLens
         open={!!selectedCountry}
         selectedCountry={selectedCountry}
@@ -511,21 +781,28 @@ export default function Globe({
   );
 }
 
-// keep COUNTRIES referenced for tree-shaking optimisation
 void COUNTRIES;
 
 function BubbleCard({
   bubble,
+  x,
+  y,
   onClick,
 }: {
   bubble: Bubble;
+  x: number;
+  y: number;
   onClick: () => void;
 }) {
-  const { concern, x, y, flavor } = bubble;
-  // bubble centred above the dot
+  const { concern, flavor } = bubble;
   const W = 320;
-  // clamp so it never goes off-screen left/right
-  const left = Math.max(12, Math.min(x - W / 2, (typeof window !== "undefined" ? window.innerWidth : 1200) - W - 12));
+  const left = Math.max(
+    12,
+    Math.min(
+      x - W / 2,
+      (typeof window !== "undefined" ? window.innerWidth : 1200) - W - 12,
+    ),
+  );
   const top = Math.max(12, y - 130);
   const accent = flavor === "yours" ? "amber" : "blood";
 
@@ -555,7 +832,6 @@ function BubbleCard({
         <span className="text-bone/45">tap →</span>
       </div>
 
-      {/* connector */}
       <svg
         className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2"
         width="2"
