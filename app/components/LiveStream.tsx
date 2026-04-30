@@ -125,6 +125,11 @@ export default function LiveStream({ concerns, solutions = [], onOpen }: Props) 
                       <p className="mt-1.5 font-mono text-[12.5px] leading-snug text-bone/90">
                         {c.text}
                       </p>
+                      {c.original && (
+                        <p className="mt-1 font-mono text-[10px] italic leading-snug text-bone/45">
+                          {c.original.lang}: “{c.original.text}”
+                        </p>
+                      )}
                     </motion.button>
                   );
                 })}

@@ -19,7 +19,7 @@ const RAW: Seed[] = [
 
   // South America
   { age: 30, countryCode: "BR", text: "the rainforest is being sold and we are watching live.", category: "climate" },
-  { age: 24, countryCode: "BR", text: "minha geração não acredita em política e isso me assusta.", category: "democracy" },
+  { age: 24, countryCode: "BR", text: "my generation doesn't believe in politics and that scares me.", category: "democracy", original: { lang: "Portuguese", text: "minha geração não acredita em política e isso me assusta." } },
   { age: 52, countryCode: "AR", text: "I have stopped trying to understand the currency.", category: "economy" },
   { age: 38, countryCode: "CL", text: "we wrote a constitution and threw it away. twice.", category: "democracy" },
   { age: 27, countryCode: "CO", text: "peace is a word politicians use before signing a war contract.", category: "war" },
@@ -30,13 +30,13 @@ const RAW: Seed[] = [
   { age: 36, countryCode: "GB", text: "the NHS is dying and we're arguing about flags.", category: "health" },
   { age: 23, countryCode: "GB", text: "rent is 70% of my salary and I'm told I'm lucky.", category: "housing" },
   { age: 58, countryCode: "GB", text: "we elected our own decline.", category: "democracy" },
-  { age: 31, countryCode: "FR", text: "la démocratie ressemble de plus en plus à une mise en scène.", category: "democracy" },
+  { age: 31, countryCode: "FR", text: "democracy looks more and more like theatre.", category: "democracy", original: { lang: "French", text: "la démocratie ressemble de plus en plus à une mise en scène." } },
   { age: 26, countryCode: "FR", text: "we'll burn another summer. literally.", category: "climate" },
   { age: 44, countryCode: "DE", text: "the centre is hollowing out. I can feel it.", category: "democracy" },
   { age: 29, countryCode: "DE", text: "I'm afraid we forgot what we promised never to forget.", category: "war" },
-  { age: 35, countryCode: "ES", text: "no llegamos a fin de mes y nadie habla de eso en la tele.", category: "economy" },
+  { age: 35, countryCode: "ES", text: "we don't make it to the end of the month and nobody on TV is saying it.", category: "economy", original: { lang: "Spanish", text: "no llegamos a fin de mes y nadie habla de eso en la tele." } },
   { age: 21, countryCode: "PT", text: "everyone smart leaves. those of us who stay feel left behind.", category: "future" },
-  { age: 39, countryCode: "IT", text: "siamo un paese di nonni. e di figli unici e tristi.", category: "loneliness" },
+  { age: 39, countryCode: "IT", text: "we are a country of grandparents. and of only children, and sad ones.", category: "loneliness", original: { lang: "Italian", text: "siamo un paese di nonni. e di figli unici e tristi." } },
   { age: 48, countryCode: "NL", text: "the polders won't hold forever.", category: "climate" },
   { age: 33, countryCode: "BE", text: "young men I know are radicalising in real time.", category: "democracy" },
   { age: 55, countryCode: "CH", text: "we are an island of comfort surrounded by collapse. the moat is shrinking.", category: "future" },
@@ -82,7 +82,7 @@ const RAW: Seed[] = [
 
   // East Asia
   { age: 29, countryCode: "CN", text: "it is hard to plan a life when planning a life is also a risk.", category: "future" },
-  { age: 34, countryCode: "CN", text: "我们这代人不敢生孩子 — and that should worry the world.", category: "economy" },
+  { age: 34, countryCode: "CN", text: "our generation is afraid to have children — and that should worry the world.", category: "economy", original: { lang: "Mandarin", text: "我们这代人不敢生孩子 — and that should worry the world." } },
   { age: 41, countryCode: "JP", text: "loneliness is killing more of us than any disease.", category: "loneliness" },
   { age: 25, countryCode: "JP", text: "the country is shrinking and nobody talks about it at dinner.", category: "future" },
   { age: 27, countryCode: "KR", text: "we are too tired to date, marry, or hope.", category: "loneliness" },
@@ -123,7 +123,7 @@ const RAW: Seed[] = [
   { age: 29, countryCode: "JP", text: "the AI talks to me more than my coworkers. I don't think this is a bug.", category: "loneliness" },
   { age: 45, countryCode: "IT", text: "I no longer trust any image I see.", category: "ai" },
   { age: 22, countryCode: "ES", text: "we used to dream of leaving the village. now we dream of returning.", category: "future" },
-  { age: 60, countryCode: "FR", text: "ma génération a tout consommé. je m'en excuse.", category: "climate" },
+  { age: 60, countryCode: "FR", text: "my generation consumed everything. I'm sorry.", category: "climate", original: { lang: "French", text: "ma génération a tout consommé. je m'en excuse." } },
   { age: 33, countryCode: "BR", text: "I can no longer tell satire from policy.", category: "democracy" },
   { age: 26, countryCode: "AR", text: "I priced an apartment in dollars. then in eggs. eggs were more stable.", category: "economy" },
   { age: 30, countryCode: "PL", text: "the church and the state had a baby and named it law.", category: "democracy" },

@@ -291,9 +291,19 @@ export default function CountryLens({
                             <span className="font-mono text-2xl tabular-nums italic text-ink/40 transition group-hover:text-blood sm:text-3xl">
                               {c.age}
                             </span>
-                            <p className="font-serif text-xl italic leading-snug text-ink sm:text-2xl">
-                              “{c.text}”
-                            </p>
+                            <div>
+                              <p className="font-serif text-xl italic leading-snug text-ink sm:text-2xl">
+                                “{c.text}”
+                              </p>
+                              {c.original && (
+                                <p className="mt-1.5 font-mono text-[10px] leading-relaxed text-ink/45">
+                                  <span className="uppercase tracking-[0.18em] text-ink/30">
+                                    {c.original.lang}:{" "}
+                                  </span>
+                                  <span className="italic">“{c.original.text}”</span>
+                                </p>
+                              )}
+                            </div>
                             <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55 sm:col-span-1 sm:flex-col sm:items-end">
                               <span>{CATEGORY_LABELS[c.category].toLowerCase()}</span>
                               <span className="text-amber">

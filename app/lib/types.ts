@@ -65,9 +65,11 @@ export type Concern = {
   age: number;
   bracket: AgeBracket;
   countryCode: string; // ISO-2
-  text: string;
+  text: string; // always english, what the UI displays
   category: ConcernCategory;
   ts: number; // unix ms
+  // when the original was non-english, keep it for the "see original" affordance
+  original?: { lang: string; text: string };
 };
 
 export type Solution = {
@@ -78,4 +80,5 @@ export type Solution = {
   countryCode: string;
   text: string;
   ts: number;
+  original?: { lang: string; text: string };
 };

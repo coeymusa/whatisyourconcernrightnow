@@ -10,6 +10,7 @@ import {
 } from "../../lib/supabase";
 import { hashIp, rateLimitOk } from "../../lib/rate-limit";
 import { verifyTurnstile } from "../../lib/turnstile";
+import { translateIfNeeded } from "../../lib/translate";
 
 const STORE: Solution[] = [...SEED_SOLUTIONS];
 
@@ -30,6 +31,9 @@ export async function GET() {
       countryCode: r.country_code,
       text: r.text,
       ts: new Date(r.created_at).getTime(),
+      ...(r.original_lang && r.original_text
+        ? { original: { lang: r.original_lang, text: r.original_text } }
+        : {}),
     }));
     return NextResponse.json({ total: items.length, solutions: items });
   }
@@ -87,13 +91,19 @@ export async function POST(req: Request) {
 
   const bracket = ageToBracket(age);
 
+  const t = await translateIfNeeded(text);
+  const englishText = t.english;
+  const original = t.original;
+
   if (hasSupabase()) {
     const row = await insertSolution({
       concern_id: concernId,
       age,
       bracket,
       country_code: country,
-      text,
+      text: englishText,
+      original_lang: original?.lang ?? null,
+      original_text: original?.text ?? null,
       ip_hash: ipHash,
     });
     if (!row) {
@@ -107,6 +117,9 @@ export async function POST(req: Request) {
       countryCode: row.country_code,
       text: row.text,
       ts: new Date(row.created_at).getTime(),
+      ...(row.original_lang && row.original_text
+        ? { original: { lang: row.original_lang, text: row.original_text } }
+        : {}),
     };
     return NextResponse.json({ ok: true, solution: sol });
   }
@@ -117,8 +130,9 @@ export async function POST(req: Request) {
     age,
     bracket,
     countryCode: country,
-    text,
+    text: englishText,
     ts: Date.now(),
+    ...(original ? { original } : {}),
   };
   STORE.push(sol);
   return NextResponse.json({ ok: true, solution: sol, total: STORE.length });

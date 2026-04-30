@@ -10,6 +10,7 @@ import {
 } from "../../lib/supabase";
 import { hashIp, rateLimitOk } from "../../lib/rate-limit";
 import { verifyTurnstile } from "../../lib/turnstile";
+import { translateIfNeeded } from "../../lib/translate";
 
 // In-memory fallback: lives for the lifetime of the server process.
 const STORE: Concern[] = [...SEED_CONCERNS];
@@ -31,6 +32,9 @@ export async function GET() {
       text: r.text,
       category: r.category as ConcernCategory,
       ts: new Date(r.created_at).getTime(),
+      ...(r.original_lang && r.original_text
+        ? { original: { lang: r.original_lang, text: r.original_text } }
+        : {}),
     }));
     return NextResponse.json({ total: concerns.length, concerns });
   }
@@ -92,13 +96,20 @@ export async function POST(req: Request) {
 
   const bracket = ageToBracket(age);
 
+  // Translate to English if needed (no-op without ANTHROPIC_API_KEY)
+  const t = await translateIfNeeded(text);
+  const englishText = t.english;
+  const original = t.original;
+
   // 3. Persist
   if (hasSupabase()) {
     const row = await insertConcern({
       age,
       bracket,
       country_code: country,
-      text,
+      text: englishText,
+      original_lang: original?.lang ?? null,
+      original_text: original?.text ?? null,
       category,
       ip_hash: ipHash,
     });
@@ -113,6 +124,9 @@ export async function POST(req: Request) {
       text: row.text,
       category: row.category as ConcernCategory,
       ts: new Date(row.created_at).getTime(),
+      ...(row.original_lang && row.original_text
+        ? { original: { lang: row.original_lang, text: row.original_text } }
+        : {}),
     };
     return NextResponse.json({ ok: true, concern });
   }
@@ -122,9 +136,10 @@ export async function POST(req: Request) {
     age,
     bracket,
     countryCode: country,
-    text,
+    text: englishText,
     category,
     ts: Date.now(),
+    ...(original ? { original } : {}),
   };
   STORE.push(concern);
   return NextResponse.json({ ok: true, concern, total: STORE.length });

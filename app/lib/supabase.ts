@@ -15,6 +15,8 @@ type Row = {
   bracket: string;
   country_code: string;
   text: string;
+  original_lang?: string | null;
+  original_text?: string | null;
   category: string;
   created_at: string;
 };
@@ -45,6 +47,8 @@ export async function insertConcern(input: {
   bracket: string;
   country_code: string;
   text: string;
+  original_lang?: string | null;
+  original_text?: string | null;
   category: string;
   ip_hash: string | null;
 }): Promise<Row | null> {
@@ -84,6 +88,8 @@ type SolRow = {
   bracket: string;
   country_code: string;
   text: string;
+  original_lang?: string | null;
+  original_text?: string | null;
   created_at: string;
 };
 
@@ -103,6 +109,8 @@ export async function insertSolution(input: {
   bracket: string;
   country_code: string;
   text: string;
+  original_lang?: string | null;
+  original_text?: string | null;
   ip_hash: string | null;
 }): Promise<SolRow | null> {
   const base = process.env[URL_KEY];

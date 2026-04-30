@@ -133,6 +133,14 @@ export default function EntryDrawer({
               <p className="mt-4 font-serif text-3xl italic leading-snug text-ink sm:text-4xl">
                 “{concern.text}”
               </p>
+              {concern.original && (
+                <p className="mt-3 font-mono text-[11px] leading-relaxed text-ink/50">
+                  <span className="uppercase tracking-[0.2em] text-ink/35">
+                    originally in {concern.original.lang}:{" "}
+                  </span>
+                  <span className="italic">“{concern.original.text}”</span>
+                </p>
+              )}
               <div className="mt-6 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/45">
                 {CATEGORY_LABELS[concern.category]}
               </div>

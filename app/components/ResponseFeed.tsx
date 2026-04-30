@@ -65,6 +65,11 @@ export default function ResponseFeed({ concerns, solutions, onOpen }: Props) {
                     <p className="mt-2 font-serif text-lg italic leading-snug text-ink/70 transition group-hover:text-ink">
                       “{c.text}”
                     </p>
+                    {c.original && (
+                      <p className="mt-1 font-mono text-[10px] italic text-ink/45">
+                        {c.original.lang}: “{c.original.text}”
+                      </p>
+                    )}
                   </button>
                 )}
                 {/* the response */}
