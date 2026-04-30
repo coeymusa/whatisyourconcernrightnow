@@ -7,7 +7,7 @@ export default function Manifesto() {
     <section className="paper-grain-dark relative isolate overflow-hidden bg-ink py-28 text-bone sm:py-36">
       <div className="mx-auto max-w-4xl px-5 sm:px-10">
         <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/55">
-          § 08 — the manifesto
+          § 05 — the manifesto
         </div>
 
         <motion.h2

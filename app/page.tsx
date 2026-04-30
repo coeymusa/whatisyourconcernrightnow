@@ -1,9 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import Hero from "./components/Hero";
-import SubmissionForm from "./components/SubmissionForm";
-import WorldMap from "./components/WorldMap";
+import Globe from "./components/Globe";
 import LiveStream from "./components/LiveStream";
 import ResponseFeed from "./components/ResponseFeed";
 import ConcernIndex from "./components/ConcernIndex";
@@ -26,18 +24,15 @@ export default function Home() {
     return s.size;
   }, [concerns]);
 
-  const latest = concerns[concerns.length - 1];
-
   return (
-    <main className="bg-paper text-ink">
-      <Hero
-        total={concerns.length}
-        countries={countries}
-        latest={latest}
+    <main className="bg-ink text-bone">
+      <Globe
+        concerns={concerns}
+        totalCountries={countries}
         responses={solutions.length}
+        onSubmit={submit}
+        onOpen={open}
       />
-      <SubmissionForm onSubmit={submit} serial={concerns.length + 1} />
-      <WorldMap concerns={concerns} onOpen={open} />
       <LiveStream concerns={concerns} solutions={solutions} onOpen={open} />
       <ResponseFeed concerns={concerns} solutions={solutions} onOpen={open} />
       <ConcernIndex concerns={concerns} />

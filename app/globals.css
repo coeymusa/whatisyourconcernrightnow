@@ -165,3 +165,140 @@ textarea.dotted-input {
   animation: blink 1s steps(1) infinite;
   color: var(--color-blood);
 }
+
+/* --- Globe / planetarium ---------------------------------------------------- */
+
+/* drifting scan line across the globe */
+@keyframes scan {
+  0%   { transform: translateY(-2%); opacity: 0; }
+  10%  { opacity: 0.55; }
+  85%  { opacity: 0.55; }
+  100% { transform: translateY(102%); opacity: 0; }
+}
+.scan-line {
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(199, 50, 27, 0.55), transparent);
+  filter: blur(0.5px);
+  animation: scan 14s linear infinite;
+  pointer-events: none;
+}
+
+/* slow celestial drift — used for graticule subtle motion */
+@keyframes celestial-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-12px); }
+}
+.celestial { animation: celestial-drift 60s ease-in-out infinite alternate; }
+
+/* line that 'draws in' from dot to bubble */
+@keyframes draw-in {
+  from { stroke-dashoffset: 80; opacity: 0; }
+  60%  { opacity: 0.9; }
+  to   { stroke-dashoffset: 0; opacity: 0.9; }
+}
+.draw-in {
+  stroke-dasharray: 80;
+  animation: draw-in 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+/* soft glow behind a bubble */
+.bubble-glow {
+  box-shadow:
+    0 0 0 1px rgba(250, 246, 237, 0.06),
+    0 12px 32px -16px rgba(0, 0, 0, 0.7),
+    0 0 28px -12px rgba(199, 50, 27, 0.55);
+}
+
+/* corner vignette overlay */
+.vignette::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 70% at center, transparent 50%, rgba(0,0,0,0.55) 100%);
+}
+
+/* very subtle reticle cursor over the map */
+.reticle-cursor {
+  cursor: crosshair;
+}
+
+/* small ping at user's country after submit */
+@keyframes ping-out {
+  0%   { transform: scale(0.6); opacity: 0.95; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.ping {
+  animation: ping-out 1.4s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* shimmer for incoming counter */
+@keyframes shimmer {
+  0%, 100% { color: var(--color-blood); }
+  50%      { color: #ff7b5e; }
+}
+.shimmer { animation: shimmer 2.4s ease-in-out infinite; }
+
+/* glassy frosted background for the quick-add bar */
+.glass {
+  background: linear-gradient(
+    180deg,
+    rgba(8, 7, 10, 0.55) 0%,
+    rgba(8, 7, 10, 0.85) 100%
+  );
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+
+/* dotted-input but for the dark globe context */
+.dotted-input-dark {
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px dotted rgba(250, 246, 237, 0.4);
+  outline: none;
+  font-family: inherit;
+  color: var(--color-bone);
+  padding: 0 0.2em;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.dotted-input-dark:focus {
+  border-bottom-color: var(--color-blood);
+  background: rgba(199, 50, 27, 0.08);
+}
+.dotted-input-dark::placeholder {
+  color: rgba(250, 246, 237, 0.4);
+  font-style: italic;
+}
+textarea.dotted-input-dark {
+  border-bottom: 1.5px dotted rgba(250, 246, 237, 0.3);
+  text-align: left;
+  resize: none;
+  width: 100%;
+  line-height: 1.45;
+}
+
+/* country select option — fix dark-bg select */
+.dotted-input-dark option {
+  background: var(--color-ink);
+  color: var(--color-bone);
+}
+
+/* arrow indicator down */
+@keyframes float-down {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50%      { transform: translateY(6px); opacity: 0.9; }
+}
+.float-down { animation: float-down 2.4s ease-in-out infinite; }
+
+/* hover halo on country fills */
+.country-base {
+  transition: fill 0.25s ease, stroke 0.25s ease, opacity 0.25s ease;
+}
+.country-hover {
+  fill: rgba(199, 50, 27, 0.18);
+  stroke: rgba(255, 138, 110, 0.55);
+}

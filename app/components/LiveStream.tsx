@@ -55,7 +55,7 @@ export default function LiveStream({ concerns, solutions = [], onOpen }: Props) 
         <div className="flex items-end justify-between border-b border-bone/15 pb-4">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-bone/60">
-              § 04 — the wire
+              § 01 — the wire
             </div>
             <h2 className="mt-3 font-serif text-4xl italic leading-tight text-bone sm:text-5xl">
               listening, in real time.
