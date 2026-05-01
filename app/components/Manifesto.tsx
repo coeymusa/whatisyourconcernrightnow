@@ -35,7 +35,7 @@ export default function Manifesto() {
           </p>
         </div>
 
-        <div className="mt-20 grid gap-6 border-t border-bone/15 pt-10 font-mono text-[11px] uppercase tracking-[0.22em] text-bone/55 sm:grid-cols-3 sm:gap-12">
+        <div className="mt-20 grid gap-6 border-t border-bone/15 pt-10 font-mono text-[11px] uppercase tracking-[0.22em] text-bone/55 sm:grid-cols-4 sm:gap-12">
           <div>
             <div className="text-bone/40">colophon</div>
             <p className="mt-2 leading-relaxed text-bone/75">
@@ -54,6 +54,26 @@ export default function Manifesto() {
             <p className="mt-2 leading-relaxed text-bone/75">
               whatisyourconcern.com — pass it along.
             </p>
+          </div>
+          <div>
+            <div className="text-bone/40">source</div>
+            <a
+              href="https://github.com/coeymusa/What-is-your-concern"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 leading-relaxed text-bone/75 transition hover:text-bone"
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.32c-2.22.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.16-.89-1.16-.73-.5.05-.49.05-.49.81.06 1.23.83 1.23.83.71 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z" />
+              </svg>
+              <span>open source ↗</span>
+            </a>
           </div>
         </div>
 
