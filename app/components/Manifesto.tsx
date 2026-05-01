@@ -61,7 +61,23 @@ export default function Manifesto() {
           <DonateLink variant="block" />
         </div>
 
-        <div className="mt-16 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-bone/40">
+        {/* quiet aside — the kind of thing a reader notices on the third
+            scroll past, not a CTA */}
+        <p className="mt-14 max-w-xl font-serif text-base italic leading-relaxed text-bone/50">
+          if something here struck a nerve, you can keep talking at{" "}
+          <a
+            href="https://getmooncake.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-bone/70 underline-offset-4 transition hover:text-bone hover:underline"
+          >
+            getmooncake.com
+          </a>
+          {" "}— a quiet space I built for the conversations that don't have
+          anywhere else to land.
+        </p>
+
+        <div className="mt-12 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-bone/40">
           <span>vol. I · entry no. 0001 — onward</span>
           <span className="hidden sm:inline">© the record · {new Date().getFullYear()}</span>
         </div>
