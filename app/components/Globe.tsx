@@ -478,7 +478,7 @@ export default function Globe({
 
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/70 sm:gap-4">
           <a
-            href="https://github.com/coeymusa/whatisyourconcernrightnow"
+            href="https://github.com/coeymusa/What-is-your-concern"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden items-center gap-1.5 text-bone/55 transition hover:text-bone sm:inline-flex"
