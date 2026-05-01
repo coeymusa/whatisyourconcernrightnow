@@ -4,11 +4,12 @@ import { useState } from "react";
 
 const SITE_URL = "https://whatisyourconcern.com";
 const SHARE_TEXT =
-  "an anonymous global record of what people are afraid of, on a draggable 3D globe. add your voice.";
+  "what is your concern? an anonymous global record of human fear, on a 3D globe. one voice, one entry, no names.";
 
 const TWEET_URL = `https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TEXT)}&url=${encodeURIComponent(SITE_URL)}`;
+const BLUESKY_URL = `https://bsky.app/intent/compose?text=${encodeURIComponent(SHARE_TEXT + " " + SITE_URL)}`;
 const WHATSAPP_URL = `https://wa.me/?text=${encodeURIComponent(SHARE_TEXT + " " + SITE_URL)}`;
-const REDDIT_URL = `https://www.reddit.com/submit?url=${encodeURIComponent(SITE_URL)}&title=${encodeURIComponent("what is your concern?")}`;
+const REDDIT_URL = `https://www.reddit.com/submit?url=${encodeURIComponent(SITE_URL)}&title=${encodeURIComponent("an anonymous global record of human concern, on a 3D globe")}`;
 const FACEBOOK_URL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SITE_URL)}`;
 const TELEGRAM_URL = `https://t.me/share/url?url=${encodeURIComponent(SITE_URL)}&text=${encodeURIComponent(SHARE_TEXT)}`;
 
@@ -62,17 +63,17 @@ export default function ShareLinks({ tone = "dark" }: { tone?: Tone }) {
         <a className={tile} href={TWEET_URL} target="_blank" rel="noopener noreferrer">
           x / twitter →
         </a>
+        <a className={tile} href={BLUESKY_URL} target="_blank" rel="noopener noreferrer">
+          bluesky →
+        </a>
         <a className={tile} href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
           whatsapp →
-        </a>
-        <a className={tile} href={REDDIT_URL} target="_blank" rel="noopener noreferrer">
-          reddit →
         </a>
         <a className={tile} href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
           telegram →
         </a>
-        <a className={tile} href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer">
-          facebook →
+        <a className={tile} href={REDDIT_URL} target="_blank" rel="noopener noreferrer">
+          reddit →
         </a>
         <button className={tile} onClick={nativeShare} type="button">
           {shared ? "✓ shared" : "share…"}
