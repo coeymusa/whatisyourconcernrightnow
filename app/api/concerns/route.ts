@@ -98,8 +98,24 @@ export async function POST(req: Request) {
   }
 
   const mod = moderate(text);
-  if (!mod.ok) {
+  if (mod.kind === "block") {
     return NextResponse.json({ error: mod.reason }, { status: 400 });
+  }
+  // shadowban: pretend it worked, return a synthetic concern object that
+  // mirrors what an insert would have returned, but never touch the DB.
+  if (mod.kind === "shadowban") {
+    return NextResponse.json({
+      ok: true,
+      concern: {
+        id: `ghost-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        age,
+        bracket: ageToBracket(age),
+        countryCode: country,
+        text,
+        category,
+        ts: Date.now(),
+      },
+    });
   }
 
   const ip = clientIp(req);

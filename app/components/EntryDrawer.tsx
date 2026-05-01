@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { COUNTRIES, findCountry } from "../lib/countries";
 import { CATEGORY_LABELS, type Concern, type Solution } from "../lib/types";
-import { moderate } from "../lib/moderation";
+import { moderateClient } from "../lib/moderation";
 
 const MAX_LENGTH = 280;
 
@@ -76,7 +76,7 @@ export default function EntryDrawer({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid || !concern || submitting) return;
-    const mod = moderate(text);
+    const mod = moderateClient(text);
     if (!mod.ok) {
       setError(mod.reason);
       return;

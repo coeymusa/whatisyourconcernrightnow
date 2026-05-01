@@ -6,7 +6,7 @@ import { COUNTRIES } from "../lib/countries";
 import type { ConcernCategory } from "../lib/types";
 import { classify } from "../lib/store";
 import { guessCountry, isValidCountry, loadPrefs, savePrefs } from "../lib/ux";
-import { moderate } from "../lib/moderation";
+import { moderateClient } from "../lib/moderation";
 
 const MAX = 240;
 
@@ -56,7 +56,7 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
   function handleSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!valid || submitting) return;
-    const mod = moderate(text);
+    const mod = moderateClient(text);
     if (!mod.ok) {
       setError(mod.reason);
       return;

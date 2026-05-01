@@ -6,11 +6,41 @@ const URL_RE = /(https?:\/\/|\bwww\.[a-z0-9-]|\b[a-z][a-z0-9-]*\.(com|net|org|io
 
 const HANDLE_RE = /(?:^|\s)@[a-z0-9_.-]{3,}/i; // @username spam
 
-export type ModerationResult =
-  | { ok: true }
-  | { ok: false; reason: string };
+// Shadowban list — kept narrow on purpose. Only the n-word and close
+// variants. Other strong words (cunt, paki, retard, chink, gook, spic, etc.)
+// can appear in legitimate venting and are allowed through. We intentionally
+// don't echo the matched word back anywhere — the user just sees their post
+// "succeed" while it never leaves their device.
+const SLUR_RE = /\bn[i1]gg(?:er|ers|a|as|az|ah|ahs|uh|uhs)?s?\b/i;
 
+export type ModerationResult =
+  | { kind: "ok" }
+  // hard-block: surface a human-readable reason, the user can fix and retry.
+  | { kind: "block"; reason: string }
+  // shadowban: fake success, don't persist. Slurs go here so trolls don't
+  // get a feedback signal that they tripped a filter.
+  | { kind: "shadowban" };
+
+// Server-side: run all checks, including the silent slur shadowban.
 export function moderate(text: string): ModerationResult {
+  if (URL_RE.test(text)) {
+    return { kind: "block", reason: "no website links — write the thought, not a URL" };
+  }
+  if (HANDLE_RE.test(text)) {
+    return { kind: "block", reason: "no @handles — keep it anonymous and self-contained" };
+  }
+  if (SLUR_RE.test(text)) {
+    return { kind: "shadowban" };
+  }
+  return { kind: "ok" };
+}
+
+// Client-side: only the user-visible blocks (URL, handle). Intentionally
+// does NOT check for slurs — that's a server-only check, so a troll can't
+// see their post being filtered.
+export function moderateClient(
+  text: string,
+): { ok: true } | { ok: false; reason: string } {
   if (URL_RE.test(text)) {
     return { ok: false, reason: "no website links — write the thought, not a URL" };
   }

@@ -91,8 +91,23 @@ export async function POST(req: Request) {
   }
 
   const mod = moderate(text);
-  if (!mod.ok) {
+  if (mod.kind === "block") {
     return NextResponse.json({ error: mod.reason }, { status: 400 });
+  }
+  if (mod.kind === "shadowban") {
+    // fake success, never persist
+    return NextResponse.json({
+      ok: true,
+      solution: {
+        id: `ghost-sol-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        concernId,
+        age,
+        bracket: ageToBracket(age),
+        countryCode: country,
+        text,
+        ts: Date.now(),
+      },
+    });
   }
 
   const ip = clientIp(req);
