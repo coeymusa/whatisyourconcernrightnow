@@ -277,6 +277,22 @@ export default async function PressPage() {
             <code className="font-mono text-sm">#c7321b</code> blood ·{" "}
             <code className="font-mono text-sm">#d4a24a</code> amber
           </Fact>
+          <Fact label="Embed the live globe">
+            Drop the live globe into a story or research write-up:
+            <pre className="mt-3 overflow-x-auto rounded bg-ink/95 p-4 font-mono text-[11px] leading-relaxed text-bone">
+{`<iframe
+  src="https://whatisyourconcern.com/embed/globe"
+  width="100%" height="700"
+  style="border:0;max-width:100%;"
+  title="what is your concern? — live globe"
+  loading="lazy"
+></iframe>`}
+            </pre>
+            <span className="mt-3 block text-sm text-ink/60">
+              Bubble clicks open the corresponding dispatch in a new tab.
+              The widget updates live; no API key required.
+            </span>
+          </Fact>
         </Section>
 
         {/* §  Contact */}
