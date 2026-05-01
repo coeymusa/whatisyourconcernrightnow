@@ -232,6 +232,7 @@ export default async function PulsePage() {
                       <span className="text-ink/30">·</span>
                       <Link
                         href={`/dispatch/${c.id}`}
+                        aria-label={`Permalink to anon dispatch from ${country?.name ?? c.countryCode}`}
                         className="text-ink/55 hover:text-ink"
                       >
                         permalink →

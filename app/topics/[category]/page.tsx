@@ -21,6 +21,7 @@ import {
   TopBar,
 } from "../../components/editorial";
 import PublicDiscourseList from "../../components/PublicDiscourseList";
+import ShareDispatch from "../../components/ShareDispatch";
 
 const SITE_URL = "https://whatisyourconcern.com";
 
@@ -314,6 +315,7 @@ export default async function TopicPage({ params }: Props) {
                       <span className="text-ink/30">·</span>
                       <Link
                         href={`/dispatch/${c.id}`}
+                        aria-label={`Permalink to anon dispatch no. ${i + 1} on ${label.toLowerCase()}`}
                         className="text-ink/55 hover:text-ink"
                       >
                         permalink →
@@ -344,6 +346,11 @@ export default async function TopicPage({ params }: Props) {
             </Link>
           </section>
         )}
+
+        <ShareDispatch
+          url={url}
+          text={`What the world is saying about ${label.toLowerCase()} — the record`}
+        />
 
         {topCountries.length > 0 && (
           <section className="mt-24 border-t border-ink/15 pt-12">

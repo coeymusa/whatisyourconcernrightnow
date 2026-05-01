@@ -132,7 +132,7 @@ export default function EntryDrawer({
                 className="text-ink/60 transition hover:text-blood"
                 aria-label="close"
               >
-                close ✕
+                close <span aria-hidden="true">✕</span>
               </button>
             </div>
 

@@ -1053,8 +1053,9 @@ export default function Globe({
                 <button
                   onClick={() => setShareOpen(false)}
                   className="text-bone/55 transition hover:text-blood"
+                  aria-label="close"
                 >
-                  close ✕
+                  close <span aria-hidden="true">✕</span>
                 </button>
               </div>
               <div className="space-y-6 px-5 py-6 sm:px-7 sm:py-8">

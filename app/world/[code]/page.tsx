@@ -16,6 +16,7 @@ import {
   TopBar,
 } from "../../components/editorial";
 import PublicDiscourseList from "../../components/PublicDiscourseList";
+import ShareDispatch from "../../components/ShareDispatch";
 
 const SITE_URL = "https://whatisyourconcern.com";
 
@@ -297,6 +298,7 @@ export default async function CountryPage({ params }: Props) {
                     <span className="text-ink/30">·</span>
                     <Link
                       href={`/dispatch/${c.id}`}
+                      aria-label={`Permalink to anon dispatch no. ${i + 1} from ${country.name}`}
                       className="text-ink/55 hover:text-ink"
                     >
                       permalink →
@@ -350,6 +352,11 @@ export default async function CountryPage({ params }: Props) {
               just an age bracket and a country.
             </p>
           </div>
+
+          <ShareDispatch
+            url={url}
+            text={`What is ${country.name} concerned about? — the record`}
+          />
 
           {topTopics.length > 0 && (
             <div className="mt-10 grid gap-4 border-t border-ink/15 pt-8 sm:grid-cols-3">

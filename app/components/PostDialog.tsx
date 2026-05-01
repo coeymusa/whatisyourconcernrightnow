@@ -80,8 +80,9 @@ export default function PostDialog({
               <button
                 onClick={onClose}
                 className="text-bone/55 transition hover:text-blood"
+                aria-label="close"
               >
-                close ✕
+                close <span aria-hidden="true">✕</span>
               </button>
             </div>
 
