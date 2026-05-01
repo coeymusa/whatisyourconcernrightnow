@@ -350,13 +350,13 @@ export default function Explore({ concerns, solutions, onOpen, loadOlder }: Prop
                     delay: Math.min(i * 0.015, 0.25),
                   }}
                 >
-                  <div className="group flex h-full w-full flex-col border border-ink/15 bg-bone text-ink transition hover:border-ink hover:shadow-[0_14px_36px_-20px_rgba(10,9,8,0.35)]">
+                  <div className="group flex h-full w-full min-w-0 flex-col border border-ink/15 bg-bone text-ink transition hover:border-ink hover:shadow-[0_14px_36px_-20px_rgba(10,9,8,0.35)]">
                     <button
                       onClick={() => onOpen(c)}
                       className="flex flex-1 flex-col gap-3 p-5 text-left"
                     >
-                      <div className="flex items-baseline justify-between gap-6 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
-                        <span className="truncate text-blood">
+                      <div className="flex items-baseline justify-between gap-4 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                        <span className="min-w-0 truncate text-blood">
                           {findCountry(c.countryCode)?.name ?? c.countryCode}
                         </span>
                         <span className="shrink-0 whitespace-nowrap">age&nbsp;{c.age}</span>
@@ -369,9 +369,9 @@ export default function Explore({ concerns, solutions, onOpen, loadOlder }: Prop
                           {c.original.lang}: “{c.original.text}”
                         </p>
                       )}
-                      <div className="mt-auto flex items-center justify-between gap-6 border-t border-ink/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
-                        <span className="truncate">{CATEGORY_LABELS[c.category].toLowerCase()}</span>
-                        <span className="flex shrink-0 items-center gap-4 whitespace-nowrap">
+                      <div className="mt-auto flex items-center justify-between gap-4 border-t border-ink/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                        <span className="min-w-0 truncate">{CATEGORY_LABELS[c.category].toLowerCase()}</span>
+                        <span className="flex shrink-0 items-center gap-3 whitespace-nowrap">
                           <span className="text-amber">
                             {respN}&nbsp;response{respN === 1 ? "" : "s"}
                           </span>
