@@ -22,12 +22,13 @@ function clientIp(req: Request): string {
   return req.headers.get("cf-connecting-ip") ?? "0.0.0.0";
 }
 
-// Edge-cache the GET so a flood of polling clients hits Supabase ~once per
-// 10s per region instead of N times. stale-while-revalidate keeps the
-// response warm for another 30s while the next read refreshes in the
-// background. (304-style behaviour without ETag math.)
+// Edge-cache aggressively. Concerns are slow-moving enough that "live"
+// can mean ~1min latency. With s-maxage=60 + SWR 5min, all clients in a
+// region hit Supabase at most once per minute between them; if the cache
+// goes cold, we serve a stale response and revalidate in the background.
+// At IIB-frontpage scale this drops Supabase egress 5-6x vs the 10s window.
 const PUBLIC_CACHE = {
-  "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30",
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
 };
 
 export async function GET(req: Request) {
