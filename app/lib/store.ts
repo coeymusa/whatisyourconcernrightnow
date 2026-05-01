@@ -98,9 +98,17 @@ export function useConcernRecord() {
         ts: Date.now(),
       };
       setConcerns((prev) => [...prev, c]);
-      // persist user submission
+      // persist user submission to localStorage (instant restore on reload)
       const next = [...loadFromStorage<Concern>(STORAGE_KEY), c];
       saveToStorage(STORAGE_KEY, next);
+      // and to the server so other devices / browsers / users can see it
+      if (typeof window !== "undefined") {
+        fetch("/api/concerns", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        }).catch(() => {});
+      }
       return c;
     },
     [],

@@ -520,7 +520,10 @@ export default function Globe({
       <div
         ref={wrapRef}
         className="relative flex-1 select-none overflow-hidden"
-        style={{ touchAction: "none" }}
+        // pan-y lets the page scroll vertically through this section on mobile
+        // (otherwise users get trapped on the globe). Horizontal drag is still
+        // captured for rotation; pinch still zooms.
+        style={{ touchAction: "pan-y pinch-zoom" }}
       >
         {/* stars */}
         <div className="pointer-events-none absolute inset-0">
