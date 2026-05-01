@@ -119,7 +119,7 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
           onKeyDown={onKey}
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, MAX))}
-          placeholder="what's on your mind?"
+          placeholder="what's on your mind, right now?"
           className="dotted-input-dark grow font-serif text-2xl italic leading-snug placeholder:italic sm:text-3xl"
           aria-label="your concern"
         />

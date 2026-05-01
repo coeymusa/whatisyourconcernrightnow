@@ -5,11 +5,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://whatisyourconcern.com"),
   title: "what is your concern?",
   description:
-    "An anonymous global record of what humanity is afraid of. Add your voice. The world is listening.",
+    "An anonymous global record of what humanity is afraid of, right now. Add your voice. The world is listening.",
   openGraph: {
     title: "what is your concern?",
     description:
-      "An anonymous global record of what humanity is afraid of.",
+      "An anonymous global record of what humanity is afraid of, right now.",
     type: "website",
     url: "/",
   },

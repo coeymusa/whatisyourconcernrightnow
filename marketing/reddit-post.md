@@ -6,7 +6,7 @@
 
 **A.** what is your concern? — an anonymous global record of what people fear, on a draggable 3D globe
 
-**B.** Drag a globe to read what people around the world are anonymously afraid of
+**B.** Drag a globe to read what people around the world are anonymously afraid of right now
 
 **C.** I built a quiet room where anyone, anywhere, can post what scares them about the future — mapped on a 3D globe
 
