@@ -90,19 +90,43 @@ export default function Hero({ total, countries, latest, responses }: Props) {
           <Stat label="last entry" value={latest && mounted ? relativeTime(latest.ts) : "—"} small />
         </motion.div>
 
-        <motion.a
-          href="#submit"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.85 }}
-          className="group mt-14 inline-flex items-baseline gap-3 font-mono text-xs uppercase tracking-[0.25em] text-ink"
-        >
-          <span className="relative">
-            ↓ add your voice
-            <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-100 bg-blood transition-transform duration-500 group-hover:scale-x-0" />
-          </span>
-          <span className="text-ink/40">it takes 30 seconds</span>
-        </motion.a>
+        <div className="mt-14 flex flex-wrap items-baseline gap-x-8 gap-y-4 font-mono text-xs uppercase tracking-[0.25em]">
+          <motion.a
+            href="#submit"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.85 }}
+            className="group inline-flex items-baseline gap-3 text-ink"
+          >
+            <span className="relative">
+              ↓ add your voice
+              <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-100 bg-blood transition-transform duration-500 group-hover:scale-x-0" />
+            </span>
+            <span className="text-ink/40">30 seconds</span>
+          </motion.a>
+
+          <motion.a
+            href="/pulse"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 1.0 }}
+            className="group inline-flex items-baseline gap-2 text-ink/65 hover:text-ink"
+          >
+            <span>read the pulse</span>
+            <span className="text-blood">→</span>
+          </motion.a>
+
+          <motion.a
+            href="/world"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 1.1 }}
+            className="group hidden items-baseline gap-2 text-ink/65 hover:text-ink sm:inline-flex"
+          >
+            <span>browse by country</span>
+            <span className="text-blood">→</span>
+          </motion.a>
+        </div>
       </div>
 
       {/* marquee strip */}
