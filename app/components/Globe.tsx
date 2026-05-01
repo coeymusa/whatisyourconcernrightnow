@@ -22,6 +22,7 @@ import { COUNTRIES, findByM49, findCountry } from "../lib/countries";
 import CountryLens from "./CountryLens";
 import DonateLink from "./DonateLink";
 import PostDialog from "./PostDialog";
+import ShareLinks from "./ShareLinks";
 
 const TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -133,6 +134,7 @@ export default function Globe({
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [pings, setPings] = useState<{ id: string; x: number; y: number }[]>([]);
   const [postOpen, setPostOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [postInitialCountry, setPostInitialCountry] = useState<string | undefined>(undefined);
 
   const openPost = useCallback((country?: string) => {
@@ -600,23 +602,14 @@ export default function Globe({
           <span className="sm:hidden">live</span>
         </div>
 
-        <h1 className="font-serif text-base italic text-bone sm:text-lg">
+        <h1 className="font-serif text-base italic text-bone sm:text-2xl">
           what is your <span className="text-blood">concern</span>?
         </h1>
 
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/70 sm:gap-4">
           <DonateLink variant="compact" />
           <button
-            onClick={() => {
-              const url = "https://whatisyourconcern.com";
-              if (typeof navigator !== "undefined" && navigator.share) {
-                navigator
-                  .share({ title: "what is your concern?", url })
-                  .catch(() => {});
-              } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-                navigator.clipboard.writeText(url).catch(() => {});
-              }
-            }}
+            onClick={() => setShareOpen(true)}
             className="hidden border border-bone/30 px-3 py-1.5 transition hover:border-blood hover:text-blood sm:inline-block"
           >
             share ↗
@@ -1010,6 +1003,57 @@ export default function Globe({
         onClose={() => setPostOpen(false)}
         onSubmit={handleSubmitConcern}
       />
+
+      {/* share dialog — same modal pattern as PostDialog post-submit, so the
+          nav-bar share matches the in-flow share prompt the user already
+          knows after they post */}
+      <AnimatePresence>
+        {shareOpen && (
+          <>
+            <motion.div
+              key="share-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              onClick={() => setShareOpen(false)}
+              className="fixed inset-0 z-[60] bg-ink/75 backdrop-blur-sm"
+            />
+            <motion.div
+              key="share-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-label="share this place"
+              initial={{ opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.97 }}
+              transition={{ duration: 0.32, ease: [0.2, 0.7, 0.3, 1] }}
+              className="fixed left-1/2 top-1/2 z-[70] w-[min(92vw,40rem)] -translate-x-1/2 -translate-y-1/2 border border-bone/20 bg-ink-soft/95 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)] backdrop-blur"
+            >
+              <div className="flex items-center justify-between border-b border-bone/15 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-bone/65">
+                <span>share this place</span>
+                <button
+                  onClick={() => setShareOpen(false)}
+                  className="text-bone/55 transition hover:text-blood"
+                >
+                  close ✕
+                </button>
+              </div>
+              <div className="space-y-6 px-5 py-6 sm:px-7 sm:py-8">
+                <div>
+                  <p className="font-serif text-2xl italic leading-snug text-bone sm:text-3xl">
+                    pass it along.
+                  </p>
+                  <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.25em] text-bone/55">
+                    sharing is the only way the record grows.
+                  </p>
+                </div>
+                <ShareLinks tone="dark" />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
