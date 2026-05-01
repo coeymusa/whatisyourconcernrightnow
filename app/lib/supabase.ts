@@ -102,6 +102,27 @@ export async function fetchCategoryCounts(): Promise<Map<string, number>> {
   return out;
 }
 
+// Solutions for a single concern — used by /dispatch/[id] to render the
+// responses thread.
+export async function fetchSolutionsByConcernId(
+  concernId: string,
+  limit = 50,
+): Promise<SolRow[]> {
+  const base = process.env[URL_KEY];
+  const k = key();
+  if (!base || !k) return [];
+  const url =
+    `${base}/rest/v1/solutions_public?select=*` +
+    `&concern_id=eq.${encodeURIComponent(concernId)}` +
+    `&order=created_at.asc&limit=${Math.min(limit, 200)}`;
+  const r = await fetch(url, {
+    headers: headers(k),
+    next: { revalidate: 600, tags: [`solutions:${concernId}`] },
+  });
+  if (!r.ok) return [];
+  return (await r.json()) as SolRow[];
+}
+
 // Single-row read by id, used by /dispatch/[id] permalink pages.
 export async function fetchConcernById(id: string): Promise<Row | null> {
   const base = process.env[URL_KEY];

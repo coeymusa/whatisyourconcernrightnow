@@ -5,12 +5,14 @@ import { findCountry } from "../../lib/countries";
 import {
   fetchByCountry,
   fetchConcernById,
+  fetchSolutionsByConcernId,
   hasSupabase,
 } from "../../lib/supabase";
 import {
   CATEGORY_LABELS,
   type Concern,
   type ConcernCategory,
+  type Solution,
 } from "../../lib/types";
 import {
   Breadcrumb,
@@ -90,10 +92,12 @@ export default async function DispatchPage({ params }: Props) {
   const country = findCountry(concern.countryCode);
   const url = `${SITE_URL}/dispatch/${id}`;
 
-  // A handful of related dispatches from the same country.
-  const relatedRows = hasSupabase()
-    ? await fetchByCountry(concern.countryCode, 6)
-    : [];
+  // Related dispatches from the same country + the responses thread for
+  // this specific concern.
+  const [relatedRows, solutionRows] = await Promise.all([
+    hasSupabase() ? fetchByCountry(concern.countryCode, 6) : Promise.resolve([]),
+    hasSupabase() ? fetchSolutionsByConcernId(id, 30) : Promise.resolve([]),
+  ]);
   const related = relatedRows
     .filter((r) => r.id !== id)
     .slice(0, 4)
@@ -108,6 +112,15 @@ export default async function DispatchPage({ params }: Props) {
         ts: new Date(r.created_at).getTime(),
       }),
     );
+  const solutions: Solution[] = solutionRows.map((s) => ({
+    id: s.id,
+    concernId: s.concern_id,
+    age: s.age,
+    bracket: s.bracket as Solution["bracket"],
+    countryCode: s.country_code,
+    text: s.text,
+    ts: new Date(s.created_at).getTime(),
+  }));
 
   const breadcrumbs = {
     "@context": "https://schema.org",
@@ -234,6 +247,41 @@ export default async function DispatchPage({ params }: Props) {
           </Link>
           .
         </p>
+
+        {solutions.length > 0 && (
+          <section className="mt-20 border-t border-ink/15 pt-12">
+            <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
+              § responses — {solutions.length}{" "}
+              {solutions.length === 1 ? "voice" : "voices"} answering
+            </div>
+            <p className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
+              Anonymous responses to this dispatch from people elsewhere on
+              the record. They speak to the dispatch, not for it.
+            </p>
+            <ol className="mt-8 space-y-10">
+              {solutions.map((s, i) => {
+                const sCountry = findCountry(s.countryCode);
+                return (
+                  <li
+                    key={s.id}
+                    className="border-l-2 border-amber/50 pl-5 sm:pl-7"
+                  >
+                    <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink/45">
+                      no. {String(i + 1).padStart(2, "0")} — answer
+                    </div>
+                    <blockquote className="mt-3 font-serif text-xl leading-snug text-ink sm:text-2xl">
+                      &ldquo;{s.text}&rdquo;
+                    </blockquote>
+                    <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                      {sCountry?.name ?? s.countryCode} · ages {s.bracket} ·{" "}
+                      {relativeDate(s.ts)}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
 
         {related.length > 0 && (
           <section className="mt-20 border-t border-ink/15 pt-12">
