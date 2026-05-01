@@ -11,7 +11,8 @@
 --   4. Replaces the public views with simple SELECTs that read the columns
 --      instead of joining + grouping
 --
--- Run ONCE in the Supabase SQL editor.
+-- Run ONCE in the Supabase SQL editor. Safe to re-run (uses if-not-exists
+-- and create-or-replace).
 
 -- 1. columns ----------------------------------------------------------------
 alter table public.concerns
@@ -25,23 +26,25 @@ alter table public.solutions
   add column if not exists downvotes int not null default 0;
 
 -- 2. backfill from existing vote rows ---------------------------------------
+-- (count(*) filter (...)) parens are required before the ::int cast —
+-- Postgres won't parse `count(*)::int filter (...)`.
 update public.concerns c set
-  score     = coalesce((select sum(value)::int                                 from public.concern_votes v where v.concern_id = c.id), 0),
-  upvotes   = coalesce((select count(*)::int filter (where value =  1)         from public.concern_votes v where v.concern_id = c.id), 0),
-  downvotes = coalesce((select count(*)::int filter (where value = -1)         from public.concern_votes v where v.concern_id = c.id), 0);
+  score     = coalesce((select sum(value)::int                          from public.concern_votes v where v.concern_id = c.id), 0),
+  upvotes   = coalesce((select (count(*) filter (where value =  1))::int from public.concern_votes v where v.concern_id = c.id), 0),
+  downvotes = coalesce((select (count(*) filter (where value = -1))::int from public.concern_votes v where v.concern_id = c.id), 0);
 
 update public.solutions s set
-  score     = coalesce((select sum(value)::int                                 from public.solution_votes v where v.solution_id = s.id), 0),
-  upvotes   = coalesce((select count(*)::int filter (where value =  1)         from public.solution_votes v where v.solution_id = s.id), 0),
-  downvotes = coalesce((select count(*)::int filter (where value = -1)         from public.solution_votes v where v.solution_id = s.id), 0);
+  score     = coalesce((select sum(value)::int                          from public.solution_votes v where v.solution_id = s.id), 0),
+  upvotes   = coalesce((select (count(*) filter (where value =  1))::int from public.solution_votes v where v.solution_id = s.id), 0),
+  downvotes = coalesce((select (count(*) filter (where value = -1))::int from public.solution_votes v where v.solution_id = s.id), 0);
 
 -- 3. recalc helpers + triggers ---------------------------------------------
 create or replace function public.recalc_concern_counts(p_id uuid)
 returns void language sql as $$
   update public.concerns set
-    score     = coalesce((select sum(value)::int                       from public.concern_votes where concern_id = p_id), 0),
-    upvotes   = coalesce((select count(*)::int filter (where value= 1) from public.concern_votes where concern_id = p_id), 0),
-    downvotes = coalesce((select count(*)::int filter (where value=-1) from public.concern_votes where concern_id = p_id), 0)
+    score     = coalesce((select sum(value)::int                          from public.concern_votes where concern_id = p_id), 0),
+    upvotes   = coalesce((select (count(*) filter (where value =  1))::int from public.concern_votes where concern_id = p_id), 0),
+    downvotes = coalesce((select (count(*) filter (where value = -1))::int from public.concern_votes where concern_id = p_id), 0)
     where id = p_id;
 $$;
 
@@ -68,9 +71,9 @@ create trigger concern_votes_recalc
 create or replace function public.recalc_solution_counts(p_id uuid)
 returns void language sql as $$
   update public.solutions set
-    score     = coalesce((select sum(value)::int                       from public.solution_votes where solution_id = p_id), 0),
-    upvotes   = coalesce((select count(*)::int filter (where value= 1) from public.solution_votes where solution_id = p_id), 0),
-    downvotes = coalesce((select count(*)::int filter (where value=-1) from public.solution_votes where solution_id = p_id), 0)
+    score     = coalesce((select sum(value)::int                          from public.solution_votes where solution_id = p_id), 0),
+    upvotes   = coalesce((select (count(*) filter (where value =  1))::int from public.solution_votes where solution_id = p_id), 0),
+    downvotes = coalesce((select (count(*) filter (where value = -1))::int from public.solution_votes where solution_id = p_id), 0)
     where id = p_id;
 $$;
 
