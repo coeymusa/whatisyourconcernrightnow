@@ -26,10 +26,17 @@ export type ModerationResult =
 // else ever does.
 const JOKE_AGES = new Set([69, 420]);
 
+// Country codes we shadowban. Niger (NE) is overwhelmingly used as a
+// vehicle for the n-word slur on this site. Real Nigerien users can pick
+// Nigeria (NG) or another nearby country if they want their post to land —
+// the cost of suppressing legitimate posts here is real but the troll
+// signal-to-noise on NE is dire enough to justify it.
+const SHADOWBAN_COUNTRIES = new Set(["NE"]);
+
 // Server-side: run all checks, including the silent slur + joke-age shadowban.
 export function moderate(
   text: string,
-  ctx?: { age?: number },
+  ctx?: { age?: number; countryCode?: string },
 ): ModerationResult {
   if (URL_RE.test(text)) {
     return { kind: "block", reason: "no website links — write the thought, not a URL" };
@@ -41,6 +48,9 @@ export function moderate(
     return { kind: "shadowban" };
   }
   if (typeof ctx?.age === "number" && JOKE_AGES.has(ctx.age)) {
+    return { kind: "shadowban" };
+  }
+  if (ctx?.countryCode && SHADOWBAN_COUNTRIES.has(ctx.countryCode.toUpperCase())) {
     return { kind: "shadowban" };
   }
   return { kind: "ok" };
