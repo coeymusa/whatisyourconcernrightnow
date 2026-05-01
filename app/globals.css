@@ -306,3 +306,27 @@ textarea.dotted-input-dark {
   fill: rgba(199, 50, 27, 0.18);
   stroke: rgba(255, 138, 110, 0.55);
 }
+
+/* globe gesture handling — mobile locks the section so drag rotates the
+   globe instead of scrolling the page; desktop allows pan-y so wheel
+   scrolling past the globe still works */
+.globe-touch { touch-action: none; }
+@media (min-width: 768px) {
+  .globe-touch { touch-action: pan-y pinch-zoom; }
+}
+
+/* bubble preview text — clamp at 3 lines so a long concern doesn't blow
+   up the card or overflow the screen on small viewports */
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+/* respect iOS home indicator / android nav so the bottom button row isn't
+   sitting underneath the safe area on small screens */
+.safe-bottom {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}

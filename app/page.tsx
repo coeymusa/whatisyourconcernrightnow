@@ -9,7 +9,7 @@ import { useConcernRecord } from "./lib/store";
 import type { Concern } from "./lib/types";
 
 export default function Home() {
-  const { concerns, solutions, submit, submitSolution, loadOlder } =
+  const { concerns, solutions, submit, submitSolution, loadOlder, loaded } =
     useConcernRecord();
   const [openConcern, setOpenConcern] = useState<Concern | null>(null);
 
@@ -29,6 +29,7 @@ export default function Home() {
         solutions={solutions}
         totalCountries={countries}
         responses={solutions.length}
+        loaded={loaded}
         onSubmit={submit}
         onOpen={open}
       />

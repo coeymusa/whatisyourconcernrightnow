@@ -36,6 +36,11 @@ function saveToStorage<T>(key: string, items: T[]) {
 export function useConcernRecord() {
   const [concerns, setConcerns] = useState<Concern[]>([]);
   const [solutions, setSolutions] = useState<Solution[]>([]);
+  // tracks whether the very first poll has completed — so the UI can
+  // hold off rendering the 'the record is empty' empty state until we
+  // actually know it's empty (rather than showing it during the brief
+  // initial-load window before the first fetch lands)
+  const [loaded, setLoaded] = useState(false);
 
   // hydrate user submissions from storage on mount
   useEffect(() => {
@@ -115,6 +120,9 @@ export function useConcernRecord() {
       } catch {
         backoff = Math.min(backoff * 2, MAX_BACKOFF);
       } finally {
+        // first poll completed (success or failure) — let the UI show
+        // empty/loaded state instead of flashing the empty-state cue
+        if (!cancelled) setLoaded(true);
         schedule(backoff);
       }
     }
@@ -221,7 +229,7 @@ export function useConcernRecord() {
     [concerns],
   );
 
-  return { concerns, solutions, submit, submitSolution, loadOlder };
+  return { concerns, solutions, submit, submitSolution, loadOlder, loaded };
 }
 
 // classify a free-text concern into a category by keyword sniffing.

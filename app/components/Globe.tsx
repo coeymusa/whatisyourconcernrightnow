@@ -41,6 +41,7 @@ type Props = {
   solutions: Solution[];
   totalCountries: number;
   responses: number;
+  loaded?: boolean;
   onSubmit: (input: {
     age: number;
     countryCode: string;
@@ -112,6 +113,7 @@ export default function Globe({
   solutions,
   totalCountries,
   responses,
+  loaded = false,
   onSubmit,
   onOpen,
 }: Props) {
@@ -533,11 +535,10 @@ export default function Globe({
       {/* THE PLANET */}
       <div
         ref={wrapRef}
-        className="relative flex-1 select-none overflow-hidden"
-        // pan-y lets the page scroll vertically through this section on mobile
-        // (otherwise users get trapped on the globe). Horizontal drag is still
-        // captured for rotation; pinch still zooms.
-        style={{ touchAction: "pan-y pinch-zoom" }}
+        // mobile: touch-action: none — drag rotates the globe (scrolling
+        // is via the visible 'explore the record ↓' button instead).
+        // desktop: pan-y pinch-zoom so wheel scrolling past works.
+        className="globe-touch relative flex-1 select-none overflow-hidden"
       >
         {/* stars */}
         <div className="pointer-events-none absolute inset-0">
@@ -793,8 +794,10 @@ export default function Globe({
           <span>{responses.toLocaleString()} responses</span>
         </div>
 
-        {/* empty state — only when nothing has been recorded yet */}
-        {concerns.length === 0 && (
+        {/* empty state — only after the first poll has resolved with zero rows.
+            Without this guard the cue flashes for ~half a second on every page
+            load before the API responds. */}
+        {loaded && concerns.length === 0 && (
           <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-3 px-6 text-center">
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/55">
               the record is empty
@@ -843,11 +846,14 @@ export default function Globe({
           </button>
         </div>
 
-        {/* bottom action pair — post + scroll-to-explore */}
-        <div className="pointer-events-auto absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+        {/* bottom action pair — post + scroll-to-explore.
+            On mobile: stacked, larger tap targets, safe-area padding so iOS
+            home indicator doesn't sit on top of the buttons. On desktop:
+            inline pair as before. */}
+        <div className="pointer-events-auto safe-bottom absolute inset-x-4 bottom-0 z-20 flex flex-col items-stretch gap-2 sm:left-1/2 sm:right-auto sm:bottom-6 sm:inset-x-auto sm:flex-row sm:-translate-x-1/2 sm:items-center sm:gap-2 sm:p-0">
           <button
             onClick={() => openPost()}
-            className="inline-flex items-center gap-2 bg-blood px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.28em] text-bone transition hover:bg-bone hover:text-blood"
+            className="inline-flex items-center justify-center gap-2 bg-blood px-5 py-3.5 font-mono text-[11px] uppercase tracking-[0.28em] text-bone transition hover:bg-bone hover:text-blood sm:px-4 sm:py-2.5 sm:text-[10px]"
           >
             <span>+ post yours</span>
           </button>
@@ -859,7 +865,7 @@ export default function Globe({
                   ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }
             }}
-            className="inline-flex items-center gap-2 border border-bone/25 bg-ink/70 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.28em] text-bone/80 backdrop-blur transition hover:border-blood hover:text-blood"
+            className="inline-flex items-center justify-center gap-2 border border-bone/25 bg-ink/80 px-5 py-3.5 font-mono text-[11px] uppercase tracking-[0.28em] text-bone backdrop-blur transition hover:border-blood hover:text-blood sm:bg-ink/70 sm:px-4 sm:py-2.5 sm:text-[10px] sm:text-bone/80"
             aria-label="scroll to explore"
           >
             <span>explore the record</span>
@@ -927,7 +933,7 @@ function BubbleCard({
       className="bubble-glow pointer-events-auto absolute z-10 cursor-pointer border border-bone/15 bg-ink-soft/85 p-4 text-left backdrop-blur-sm hover:border-bone/30"
       style={{ width: W, left, top }}
     >
-      <p className="font-serif text-base italic leading-snug text-bone sm:text-lg">
+      <p className="clamp-3 font-serif text-base italic leading-snug text-bone sm:text-lg">
         “{concern.text}”
       </p>
       <div
