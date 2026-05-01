@@ -80,6 +80,29 @@ export async function insertConcern(input: {
   return rows[0] ?? null;
 }
 
+// --- Dispatch (newsletter) subscribers -------------------------------------
+//
+// Decoupled from voices/voters so an email is never linked to anything posted.
+export async function insertDispatchSubscriber(input: {
+  email: string;
+  ip_hash: string | null;
+}): Promise<{ ok: boolean; alreadySubscribed?: boolean }> {
+  const base = process.env[URL_KEY];
+  const k = process.env[SERVICE_KEY];
+  if (!base || !k) return { ok: false };
+  const r = await fetch(`${base}/rest/v1/dispatch_subscribers`, {
+    method: "POST",
+    headers: {
+      ...headers(k),
+      // upsert-style: the unique index on email makes duplicate inserts a
+      // no-op, which lets us return success without leaking who's subscribed
+      Prefer: "resolution=ignore-duplicates,return=minimal",
+    },
+    body: JSON.stringify(input),
+  });
+  return { ok: r.ok };
+}
+
 export async function recentSubmissionsByIp(ipHash: string): Promise<number> {
   const base = process.env[URL_KEY];
   const k = process.env[SERVICE_KEY];

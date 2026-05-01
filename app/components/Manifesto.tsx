@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import DonateLink from "./DonateLink";
+import Dispatch from "./Dispatch";
 
 export default function Manifesto() {
   return (
@@ -76,6 +77,8 @@ export default function Manifesto() {
           {" "}— a quiet space I built for the conversations that don't have
           anywhere else to land.
         </p>
+
+        <Dispatch />
 
         <div className="mt-12 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-bone/40">
           <span>vol. I · entry no. 0001 — onward</span>
