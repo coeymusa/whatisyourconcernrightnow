@@ -970,7 +970,7 @@ export default function Globe({
             onClick={() => openPost()}
             className="
               inline-flex items-center justify-center gap-1.5 bg-blood text-bone transition hover:bg-bone hover:text-blood
-              px-3 py-1.5 text-[9px] tracking-[0.22em] font-mono uppercase
+              px-4 py-3 text-[10px] tracking-[0.22em] font-mono uppercase
               sm:px-4 sm:py-2.5 sm:text-[10px] sm:tracking-[0.28em] sm:gap-2
             "
           >
@@ -986,7 +986,7 @@ export default function Globe({
             }}
             className="
               inline-flex items-center justify-center gap-1.5 border border-bone/25 bg-ink/80 backdrop-blur transition hover:border-blood hover:text-blood text-bone
-              px-3 py-1.5 text-[9px] tracking-[0.22em] font-mono uppercase
+              px-4 py-3 text-[10px] tracking-[0.22em] font-mono uppercase
               sm:px-4 sm:py-2.5 sm:text-[10px] sm:tracking-[0.28em] sm:gap-2 sm:bg-ink/70 sm:text-bone/80
             "
             aria-label="scroll to explore"
