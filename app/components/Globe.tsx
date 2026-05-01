@@ -611,16 +611,8 @@ export default function Globe({
       <div className="relative z-30 flex items-center justify-between border-b border-bone/10 bg-ink/40 px-5 py-3 backdrop-blur sm:px-10 sm:py-4">
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.25em] text-bone/70 sm:text-xs">
           <span className="live-dot" aria-hidden />
-          <a
-            href="/pulse"
-            className="hidden hover:text-bone sm:inline"
-            aria-label="Read the pulse — global summary"
-          >
-            listening · the record
-          </a>
-          <a href="/pulse" className="hover:text-bone sm:hidden">
-            live
-          </a>
+          <span className="hidden sm:inline">listening · global record</span>
+          <span className="sm:hidden">live</span>
         </div>
 
         <h1 className="font-serif text-base italic text-bone sm:text-2xl">

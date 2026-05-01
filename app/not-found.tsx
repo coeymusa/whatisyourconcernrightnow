@@ -69,28 +69,11 @@ export default function NotFound() {
           </li>
           <li>
             <Link
-              href="/pulse"
-              className="group block border-l-2 border-blood/30 pl-5 transition hover:border-blood sm:pl-7"
-            >
-              <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/45 group-hover:text-ink">
-                no. 02
-              </div>
-              <div className="mt-1 font-serif text-2xl italic text-ink group-hover:text-blood sm:text-3xl">
-                Read the pulse →
-              </div>
-              <p className="mt-2 font-sans text-sm leading-relaxed text-ink-soft sm:text-base">
-                The week's editorial summary — what the world is afraid of,
-                this week.
-              </p>
-            </Link>
-          </li>
-          <li>
-            <Link
               href="/random"
               className="group block border-l-2 border-blood/30 pl-5 transition hover:border-blood sm:pl-7"
             >
               <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/45 group-hover:text-ink">
-                no. 03
+                no. 02
               </div>
               <div className="mt-1 font-serif text-2xl italic text-ink group-hover:text-blood sm:text-3xl">
                 Stumble on a random voice →

@@ -56,52 +56,6 @@ export async function fetchRecent(
   return (await r.json()) as Row[];
 }
 
-// Aggregate counts per country/category — used by /world and /topics
-// index pages so each entry shows how loud the record is from there.
-
-export async function fetchCountryCounts(): Promise<Map<string, number>> {
-  const base = process.env[URL_KEY];
-  const k = key();
-  const out = new Map<string, number>();
-  if (!base || !k) return out;
-  // PostgREST: select country_code with no limit, count client-side. We
-  // only have ~hundreds of rows total, so this is cheap. Switch to an
-  // RPC with GROUP BY if the row count grows past a few thousand.
-  const r = await fetch(
-    `${base}/rest/v1/concerns_public?select=country_code&limit=5000`,
-    {
-      headers: headers(k),
-      next: { revalidate: 300, tags: ["country-counts"] },
-    },
-  );
-  if (!r.ok) return out;
-  const rows = (await r.json()) as Array<{ country_code: string }>;
-  for (const row of rows) {
-    out.set(row.country_code, (out.get(row.country_code) ?? 0) + 1);
-  }
-  return out;
-}
-
-export async function fetchCategoryCounts(): Promise<Map<string, number>> {
-  const base = process.env[URL_KEY];
-  const k = key();
-  const out = new Map<string, number>();
-  if (!base || !k) return out;
-  const r = await fetch(
-    `${base}/rest/v1/concerns_public?select=category&limit=5000`,
-    {
-      headers: headers(k),
-      next: { revalidate: 300, tags: ["category-counts"] },
-    },
-  );
-  if (!r.ok) return out;
-  const rows = (await r.json()) as Array<{ category: string }>;
-  for (const row of rows) {
-    out.set(row.category, (out.get(row.category) ?? 0) + 1);
-  }
-  return out;
-}
-
 // Solutions for a single concern — used by /dispatch/[id] to render the
 // responses thread.
 export async function fetchSolutionsByConcernId(
@@ -155,27 +109,6 @@ export async function fetchByCountry(
     headers: headers(k),
     // 5-min revalidation — country pages don't need second-level freshness
     next: { revalidate: 300, tags: [`country:${countryCode.toUpperCase()}`] },
-  });
-  if (!r.ok) return [];
-  return (await r.json()) as Row[];
-}
-
-// Topic-filtered read used by /topics/[category] server-rendered pages.
-export async function fetchByCategory(
-  category: string,
-  limit = 60,
-): Promise<Row[]> {
-  const base = process.env[URL_KEY];
-  const k = key();
-  if (!base || !k) return [];
-  const safeLimit = Math.max(1, Math.min(limit, 200));
-  const url =
-    `${base}/rest/v1/concerns_public?select=*` +
-    `&category=eq.${encodeURIComponent(category)}` +
-    `&order=created_at.desc&limit=${safeLimit}`;
-  const r = await fetch(url, {
-    headers: headers(k),
-    next: { revalidate: 300, tags: [`topic:${category}`] },
   });
   if (!r.ok) return [];
   return (await r.json()) as Row[];

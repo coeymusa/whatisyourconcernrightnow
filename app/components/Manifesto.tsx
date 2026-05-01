@@ -29,27 +29,6 @@ export default function Manifesto() {
 
         <div className="mt-12 flex flex-wrap items-baseline gap-x-8 gap-y-3 font-mono text-[10px] uppercase tracking-[0.28em] text-bone/55">
           <a
-            href="/pulse"
-            className="group inline-flex items-baseline gap-2 hover:text-bone"
-          >
-            <span>read the pulse</span>
-            <span className="text-blood">→</span>
-          </a>
-          <a
-            href="/world"
-            className="group inline-flex items-baseline gap-2 hover:text-bone"
-          >
-            <span>browse by country</span>
-            <span className="text-blood">→</span>
-          </a>
-          <a
-            href="/topics"
-            className="group inline-flex items-baseline gap-2 hover:text-bone"
-          >
-            <span>browse by topic</span>
-            <span className="text-blood">→</span>
-          </a>
-          <a
             href="/random"
             className="group inline-flex items-baseline gap-2 hover:text-bone"
           >
@@ -60,7 +39,7 @@ export default function Manifesto() {
             href="/feed.xml"
             className="group inline-flex items-baseline gap-2 hover:text-bone"
           >
-            <span>rss</span>
+            <span>subscribe via rss</span>
             <span className="text-blood">→</span>
           </a>
         </div>

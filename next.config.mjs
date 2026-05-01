@@ -7,10 +7,9 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Preload the topojson on the homepage and embed so the browser
-        // starts the fetch in parallel with HTML parsing — Globe's
-        // useEffect then hits the cache instead of waiting on a round-trip.
-        // ~800ms LCP win on slow mobile.
+        // Preload the topojson on the homepage so the browser starts the
+        // fetch in parallel with HTML parsing — Globe's useEffect then
+        // hits the cache instead of waiting on a round-trip.
         source: "/",
         headers: [
           {
@@ -21,25 +20,7 @@ const nextConfig = {
         ],
       },
       {
-        source: "/embed/:path*",
-        headers: [
-          {
-            key: "Link",
-            value:
-              "</world-110m.json>; rel=preload; as=fetch; crossorigin=anonymous",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: "frame-ancestors *;",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "ALLOWALL",
-          },
-        ],
-      },
-      {
-        // The topojson is content-hashed in /public; let it cache for a year.
+        // Topojson is hashed/static; cache forever.
         source: "/world-110m.json",
         headers: [
           {

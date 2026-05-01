@@ -128,21 +128,8 @@ export default async function DispatchPage({ params }: Props) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-      country
-        ? {
-            "@type": "ListItem",
-            position: 2,
-            name: country.name,
-            item: `${SITE_URL}/world/${country.code}`,
-          }
-        : null,
-      {
-        "@type": "ListItem",
-        position: country ? 3 : 2,
-        name: "dispatch",
-        item: url,
-      },
-    ].filter(Boolean),
+      { "@type": "ListItem", position: 2, name: "dispatch", item: url },
+    ],
   };
 
   const article = {
@@ -187,9 +174,6 @@ export default async function DispatchPage({ params }: Props) {
           tone="paper"
           crumbs={[
             { label: "home", href: "/" },
-            country
-              ? { label: country.name.toLowerCase(), href: `/world/${country.code}` }
-              : { label: "dispatch" },
             { label: "dispatch" },
           ]}
         />
@@ -205,25 +189,11 @@ export default async function DispatchPage({ params }: Props) {
         <div className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-ink/15 pt-5 font-mono text-xs uppercase tracking-[0.22em] text-ink/60 sm:text-[13px]">
           <span>anonymous</span>
           <span className="text-ink/30">·</span>
-          {country ? (
-            <Link
-              href={`/world/${country.code}`}
-              className="hover:text-ink"
-            >
-              {country.name}
-            </Link>
-          ) : (
-            <span>{concern.countryCode}</span>
-          )}
+          <span>{country?.name ?? concern.countryCode}</span>
           <span className="text-ink/30">·</span>
           <span>ages {concern.bracket}</span>
           <span className="text-ink/30">·</span>
-          <Link
-            href={`/topics/${concern.category}`}
-            className="hover:text-ink"
-          >
-            {CATEGORY_LABELS[concern.category].toLowerCase()}
-          </Link>
+          <span>{CATEGORY_LABELS[concern.category].toLowerCase()}</span>
           <span className="text-ink/30">·</span>
           <span>{relativeDate(concern.ts)}</span>
         </div>
@@ -234,21 +204,7 @@ export default async function DispatchPage({ params }: Props) {
           This dispatch was submitted anonymously to <em>the record</em>.
           The contributor is not named, not tracked, and cannot be
           identified by reading the entry. The text is preserved exactly as
-          they wrote it. There are{" "}
-          <Link
-            href={country ? `/world/${country.code}` : "/world"}
-            className="text-ink underline-offset-4 hover:underline"
-          >
-            other dispatches from {country?.name ?? "around the world"}
-          </Link>{" "}
-          and{" "}
-          <Link
-            href={`/topics/${concern.category}`}
-            className="text-ink underline-offset-4 hover:underline"
-          >
-            other dispatches on {CATEGORY_LABELS[concern.category].toLowerCase()}
-          </Link>
-          .
+          they wrote it.
         </p>
 
         {solutions.length > 0 && (

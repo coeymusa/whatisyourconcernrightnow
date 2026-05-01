@@ -3,7 +3,6 @@ import { Instrument_Serif, JetBrains_Mono, Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-import SiteFooter from "./components/SiteFooter";
 
 const SITE_URL = "https://whatisyourconcern.com";
 const SITE_NAME = "what is your concern?";
@@ -189,7 +188,6 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
-        <SiteFooter />
         <Analytics />
         <SpeedInsights />
       </body>
