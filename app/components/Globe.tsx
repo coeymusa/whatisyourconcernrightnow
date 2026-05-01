@@ -813,26 +813,29 @@ export default function Globe({
           </button>
         </div>
 
-        {/* scroll to explore */}
-        <button
-          onClick={() => {
-            if (typeof document !== "undefined") {
-              document
-                .getElementById("explore")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-          }}
-          className="
-            pointer-events-auto absolute bottom-6 left-1/2 z-20 inline-flex -translate-x-1/2
-            items-center gap-2 border border-bone/25 bg-ink/70 px-4 py-2.5
-            font-mono text-[10px] uppercase tracking-[0.28em] text-bone/80
-            backdrop-blur transition hover:border-blood hover:text-blood
-          "
-          aria-label="scroll to explore"
-        >
-          <span>explore the record</span>
-          <span className="float-down text-blood">↓</span>
-        </button>
+        {/* bottom action pair — post + scroll-to-explore */}
+        <div className="pointer-events-auto absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+          <button
+            onClick={() => setPostOpen(true)}
+            className="inline-flex items-center gap-2 bg-blood px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.28em] text-bone transition hover:bg-bone hover:text-blood"
+          >
+            <span>+ post yours</span>
+          </button>
+          <button
+            onClick={() => {
+              if (typeof document !== "undefined") {
+                document
+                  .getElementById("explore")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
+            className="inline-flex items-center gap-2 border border-bone/25 bg-ink/70 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.28em] text-bone/80 backdrop-blur transition hover:border-blood hover:text-blood"
+            aria-label="scroll to explore"
+          >
+            <span>explore the record</span>
+            <span className="float-down text-blood">↓</span>
+          </button>
+        </div>
       </div>
 
       {/* country lens overlay */}
