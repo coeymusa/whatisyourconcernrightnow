@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Concern, ConcernCategory, Solution } from "./types";
 import { ageToBracket } from "./types";
-import { SEED_CONCERNS, SEED_SOLUTIONS, STREAM_FRAGMENTS } from "./seed";
+import { SEED_CONCERNS, SEED_SOLUTIONS } from "./seed";
 
 const STORAGE_KEY = "concern.submissions.v1";
 const SOL_STORAGE_KEY = "concern.solutions.v1";
@@ -84,37 +84,6 @@ export function useConcernRecord() {
     return () => {
       cancelled = true;
       window.clearInterval(id);
-    };
-  }, []);
-
-  // ambient stream — adds a "discovered" concern every 5–10s
-  useEffect(() => {
-    let cancelled = false;
-    let timer: number | undefined;
-
-    const tick = () => {
-      if (cancelled) return;
-      const frag = STREAM_FRAGMENTS[Math.floor(Math.random() * STREAM_FRAGMENTS.length)];
-      const c: Concern = {
-        id: `live-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        age: frag.age,
-        bracket: ageToBracket(frag.age),
-        countryCode: frag.countryCode,
-        text: frag.text,
-        category: frag.category,
-        ts: Date.now(),
-      };
-      setConcerns((prev) => [...prev, c]);
-      // slow cadence — every ~14–28 seconds. lets the page breathe and not
-      // feel like a fake demo.
-      const nextDelay = 14000 + Math.random() * 14000;
-      timer = window.setTimeout(tick, nextDelay);
-    };
-
-    timer = window.setTimeout(tick, 9000);
-    return () => {
-      cancelled = true;
-      if (timer) window.clearTimeout(timer);
     };
   }, []);
 
