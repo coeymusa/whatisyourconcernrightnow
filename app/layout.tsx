@@ -60,7 +60,14 @@ export const metadata: Metadata = {
   creator: "whatisyourconcern.com",
   publisher: "whatisyourconcern.com",
   category: "society",
-  alternates: { canonical: SITE_URL },
+  alternates: {
+    canonical: SITE_URL,
+    types: {
+      "application/rss+xml": [
+        { url: `${SITE_URL}/feed.xml`, title: "what is your concern? — anon dispatches" },
+      ],
+    },
+  },
   applicationName: SITE_NAME,
   referrer: "origin-when-cross-origin",
   openGraph: {
