@@ -27,6 +27,44 @@ export default function Manifesto() {
           </p>
         </div>
 
+        <div className="mt-12 flex flex-wrap items-baseline gap-x-8 gap-y-3 font-mono text-[10px] uppercase tracking-[0.28em] text-bone/55">
+          <a
+            href="/pulse"
+            className="group inline-flex items-baseline gap-2 hover:text-bone"
+          >
+            <span>read the pulse</span>
+            <span className="text-blood">→</span>
+          </a>
+          <a
+            href="/world"
+            className="group inline-flex items-baseline gap-2 hover:text-bone"
+          >
+            <span>browse by country</span>
+            <span className="text-blood">→</span>
+          </a>
+          <a
+            href="/topics"
+            className="group inline-flex items-baseline gap-2 hover:text-bone"
+          >
+            <span>browse by topic</span>
+            <span className="text-blood">→</span>
+          </a>
+          <a
+            href="/random"
+            className="group inline-flex items-baseline gap-2 hover:text-bone"
+          >
+            <span>stumble on a voice</span>
+            <span className="text-blood">→</span>
+          </a>
+          <a
+            href="/feed.xml"
+            className="group inline-flex items-baseline gap-2 hover:text-bone"
+          >
+            <span>rss</span>
+            <span className="text-blood">→</span>
+          </a>
+        </div>
+
         <div className="mt-20 grid gap-6 border-t border-bone/15 pt-10 font-mono text-[11px] uppercase tracking-[0.22em] text-bone/55 sm:grid-cols-3 sm:gap-12">
           <div>
             <div className="text-bone/40">colophon</div>
