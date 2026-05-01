@@ -23,6 +23,7 @@ import {
   SectionMark,
   TopBar,
 } from "../../components/editorial";
+import ShareDispatch from "../../components/ShareDispatch";
 
 const SITE_URL = "https://whatisyourconcern.com";
 
@@ -226,6 +227,8 @@ export default async function DispatchPage({ params }: Props) {
           <span className="text-ink/30">·</span>
           <span>{relativeDate(concern.ts)}</span>
         </div>
+
+        <ShareDispatch url={url} text={concern.text} />
 
         <p className="mt-12 max-w-2xl font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
           This dispatch was submitted anonymously to <em>the record</em>.
