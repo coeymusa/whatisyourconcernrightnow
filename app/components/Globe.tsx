@@ -780,6 +780,21 @@ export default function Globe({
           <span>{responses.toLocaleString()} responses</span>
         </div>
 
+        {/* empty state — only when nothing has been recorded yet */}
+        {concerns.length === 0 && (
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-3 px-6 text-center">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/55">
+              the record is empty
+            </span>
+            <p className="max-w-md font-serif text-2xl italic leading-snug text-bone/85 sm:text-3xl">
+              be the first to speak.
+            </p>
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-blood">
+              ↓ post yours below
+            </span>
+          </div>
+        )}
+
         {/* gestures hint */}
         <div className="pointer-events-none absolute left-5 top-5 z-20 hidden flex-col gap-1 font-mono text-[9px] uppercase tracking-[0.25em] text-bone/45 sm:flex">
           <span>drag · rotate</span>
