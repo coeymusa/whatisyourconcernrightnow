@@ -253,10 +253,16 @@ export default function Globe({
     });
   }, [projection]);
 
+  // dismiss a bubble explicitly (× button or tap-outside on mobile)
+  const dismissBubble = useCallback((id: string) => {
+    setBubbles((prev) => prev.filter((b) => b.id !== id));
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const isSmall = size.w < 700;
-    const maxBubbles = isSmall ? 2 : 3;
+    // 1 bubble on mobile so it doesn't dominate the screen, 3 on desktop
+    const maxBubbles = isSmall ? 1 : 3;
 
     function tick() {
       if (cancelled) return;
@@ -298,7 +304,8 @@ export default function Globe({
               id: `bubble-${now}-${attempt}`,
               concern: c,
               bornAt: now,
-              ttl: 6500 + Math.random() * 2500,
+              // mobile gets a shorter dwell so a missed one disappears faster
+              ttl: isSmall ? 5000 + Math.random() * 1500 : 6500 + Math.random() * 2500,
               flavor: "ambient",
             },
           ];
@@ -306,7 +313,10 @@ export default function Globe({
         return live;
       });
 
-      const nextDelay = 1500 + Math.random() * 1500;
+      // mobile spawns slower so users have time to look at the globe
+      const nextDelay = isSmall
+        ? 4000 + Math.random() * 3000
+        : 1500 + Math.random() * 1500;
       window.setTimeout(tick, nextDelay);
     }
 
@@ -756,10 +766,12 @@ export default function Globe({
                   bubble={b}
                   x={p[0]}
                   y={p[1]}
+                  isMobile={size.w < 700}
                   onClick={() => {
                     onOpen(b.concern);
                     selectCountry(b.concern.countryCode);
                   }}
+                  onDismiss={() => dismissBubble(b.id)}
                 />
               );
             })}
@@ -920,50 +932,71 @@ function BubbleCard({
   bubble,
   x,
   y,
+  isMobile,
   onClick,
+  onDismiss,
 }: {
   bubble: Bubble;
   x: number;
   y: number;
+  isMobile: boolean;
   onClick: () => void;
+  onDismiss: () => void;
 }) {
   const { concern, flavor } = bubble;
-  const W = 320;
+  const W = isMobile ? 220 : 320;
+  const viewportW =
+    typeof window !== "undefined" ? window.innerWidth : 1200;
   const left = Math.max(
     12,
-    Math.min(
-      x - W / 2,
-      (typeof window !== "undefined" ? window.innerWidth : 1200) - W - 12,
-    ),
+    Math.min(x - W / 2, viewportW - W - 12),
   );
   const top = Math.max(12, y - 130);
   const accent = flavor === "yours" ? "amber" : "blood";
 
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
+    <motion.div
       initial={{ opacity: 0, y: -6, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.96 }}
       transition={{ duration: 0.55, ease: [0.2, 0.7, 0.3, 1] }}
-      className="bubble-glow pointer-events-auto absolute z-10 cursor-pointer border border-bone/15 bg-ink-soft/85 p-4 text-left backdrop-blur-sm hover:border-bone/30"
+      className="bubble-glow pointer-events-auto absolute z-10 border border-bone/15 bg-ink-soft/85 backdrop-blur-sm hover:border-bone/30"
       style={{ width: W, left, top }}
     >
-      <p className="clamp-3 font-serif text-base italic leading-snug text-bone sm:text-lg">
-        “{concern.text}”
-      </p>
-      <div
-        className={`mt-3 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.25em] ${
-          accent === "amber" ? "text-amber" : "text-bone/55"
-        }`}
+      {/* main tap area — opens drawer */}
+      <button
+        type="button"
+        onClick={onClick}
+        className="block w-full cursor-pointer p-4 pr-9 text-left"
       >
-        <span>
-          {findCountry(concern.countryCode)?.name ?? concern.countryCode} · age{" "}
-          {concern.age}
-        </span>
-        <span className="text-bone/45">tap →</span>
-      </div>
+        <p className="clamp-3 font-serif text-[15px] italic leading-snug text-bone sm:text-lg">
+          “{concern.text}”
+        </p>
+        <div
+          className={`mt-3 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.25em] ${
+            accent === "amber" ? "text-amber" : "text-bone/55"
+          }`}
+        >
+          <span>
+            {findCountry(concern.countryCode)?.name ?? concern.countryCode} · age{" "}
+            {concern.age}
+          </span>
+          <span className="text-bone/45">tap →</span>
+        </div>
+      </button>
+
+      {/* explicit dismiss — fat tap target on mobile, small ×, top-right corner */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDismiss();
+        }}
+        aria-label="dismiss"
+        className="absolute right-1 top-1 grid h-7 w-7 place-items-center text-bone/55 transition hover:text-blood"
+      >
+        <span className="text-base leading-none">×</span>
+      </button>
 
       <svg
         className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2"
@@ -982,6 +1015,6 @@ function BubbleCard({
           className="draw-in"
         />
       </svg>
-    </motion.button>
+    </motion.div>
   );
 }
