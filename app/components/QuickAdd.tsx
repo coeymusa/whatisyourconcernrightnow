@@ -6,6 +6,7 @@ import { COUNTRIES } from "../lib/countries";
 import type { ConcernCategory } from "../lib/types";
 import { classify } from "../lib/store";
 import { guessCountry, isValidCountry, loadPrefs, savePrefs } from "../lib/ux";
+import { moderate } from "../lib/moderation";
 
 const MAX = 240;
 
@@ -24,6 +25,7 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
   const [country, setCountry] = useState("");
   const [text, setText] = useState("");
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // hydrate prefs once mounted
@@ -53,6 +55,12 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
   function handleSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!valid) return;
+    const mod = moderate(text);
+    if (!mod.ok) {
+      setError(mod.reason);
+      return;
+    }
+    setError(null);
     const cat = classify(text);
     onSubmit({ age: ageNum, countryCode: country, text, category: cat });
     savePrefs({ age: ageNum, countryCode: country });
@@ -130,16 +138,28 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
         </div>
       </div>
 
-      {/* confirmation toast */}
+      {/* error / toast */}
       <AnimatePresence>
         {done && (
           <motion.div
+            key="done"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             className="absolute -top-12 right-5 z-30 border border-amber/50 bg-ink-soft/90 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-amber backdrop-blur"
           >
             ✓ recorded · your dot is on the map
+          </motion.div>
+        )}
+        {error && (
+          <motion.div
+            key="err"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="absolute -top-12 right-5 z-30 border border-blood/70 bg-ink-soft/95 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-blood backdrop-blur"
+          >
+            ⚠ {error}
           </motion.div>
         )}
       </AnimatePresence>

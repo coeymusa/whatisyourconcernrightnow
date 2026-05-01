@@ -11,6 +11,7 @@ import {
 import { hashIp, rateLimitOk } from "../../lib/rate-limit";
 import { verifyTurnstile } from "../../lib/turnstile";
 import { translateIfNeeded } from "../../lib/translate";
+import { moderate } from "../../lib/moderation";
 
 // In-memory fallback: lives for the lifetime of the server process.
 const STORE: Concern[] = [...SEED_CONCERNS];
@@ -32,6 +33,9 @@ export async function GET() {
       text: r.text,
       category: r.category as ConcernCategory,
       ts: new Date(r.created_at).getTime(),
+      score: r.score ?? 0,
+      upvotes: r.upvotes ?? 0,
+      downvotes: r.downvotes ?? 0,
       ...(r.original_lang && r.original_text
         ? { original: { lang: r.original_lang, text: r.original_text } }
         : {}),
@@ -73,6 +77,11 @@ export async function POST(req: Request) {
   }
   if (text.length < 4 || text.length > 240) {
     return NextResponse.json({ error: "text length" }, { status: 400 });
+  }
+
+  const mod = moderate(text);
+  if (!mod.ok) {
+    return NextResponse.json({ error: mod.reason }, { status: 400 });
   }
 
   const ip = clientIp(req);

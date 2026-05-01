@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { COUNTRIES, findCountry } from "../lib/countries";
 import {
@@ -12,6 +12,28 @@ import {
   type ConcernCategory,
   type Solution,
 } from "../lib/types";
+
+const VOTES_KEY = "concern.votes.v1";
+
+function loadMyVotes(): Record<string, 1 | -1> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(VOTES_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Record<string, 1 | -1>;
+  } catch {
+    return {};
+  }
+}
+
+function saveMyVotes(v: Record<string, 1 | -1>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(VOTES_KEY, JSON.stringify(v));
+  } catch {
+    /* ignore */
+  }
+}
 
 type Sort = "newest" | "most-responses";
 
@@ -42,6 +64,44 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
   const [visible, setVisible] = useState(VISIBLE_INITIAL);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // local optimistic vote tracking
+  const [myVotes, setMyVotes] = useState<Record<string, 1 | -1>>({});
+  const [scoreDelta, setScoreDelta] = useState<Record<string, number>>({});
+  useEffect(() => {
+    setMyVotes(loadMyVotes());
+  }, []);
+
+  const vote = useCallback(
+    async (concernId: string, value: 1 | -1) => {
+      const prev = myVotes[concernId];
+      // toggle off if clicking the same direction
+      if (prev === value) return;
+      const delta = value - (prev ?? 0);
+      // optimistic
+      const nextVotes = { ...myVotes, [concernId]: value } as Record<string, 1 | -1>;
+      setMyVotes(nextVotes);
+      saveMyVotes(nextVotes);
+      setScoreDelta((d) => ({ ...d, [concernId]: (d[concernId] ?? 0) + delta }));
+      try {
+        const r = await fetch(`/api/concerns/${concernId}/vote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value }),
+        });
+        if (!r.ok) throw new Error("vote failed");
+      } catch {
+        // rollback on failure
+        const rollback = { ...nextVotes };
+        if (prev) rollback[concernId] = prev;
+        else delete rollback[concernId];
+        setMyVotes(rollback);
+        saveMyVotes(rollback);
+        setScoreDelta((d) => ({ ...d, [concernId]: (d[concernId] ?? 0) - delta }));
+      }
+    },
+    [myVotes],
+  );
 
   const responseCount = useMemo(() => {
     const m = new Map<string, number>();
@@ -252,36 +312,46 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
                     delay: Math.min(i * 0.015, 0.25),
                   }}
                 >
-                  <button
-                    onClick={() => onOpen(c)}
-                    className="group flex h-full w-full flex-col gap-3 border border-ink/15 bg-bone p-5 text-left text-ink transition hover:border-ink hover:shadow-[0_14px_36px_-20px_rgba(10,9,8,0.35)]"
-                  >
-                    <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
-                      <span className="text-blood">
-                        {findCountry(c.countryCode)?.name ?? c.countryCode}
-                      </span>
-                      <span>age {c.age}</span>
-                    </div>
-                    <p className="font-serif text-xl leading-snug text-ink sm:text-[1.35rem]">
-                      “{c.text}”
-                    </p>
-                    {c.original && (
-                      <p className="font-mono text-[10px] italic leading-relaxed text-ink/45">
-                        {c.original.lang}: “{c.original.text}”
+                  <div className="group flex h-full w-full flex-col border border-ink/15 bg-bone text-ink transition hover:border-ink hover:shadow-[0_14px_36px_-20px_rgba(10,9,8,0.35)]">
+                    <button
+                      onClick={() => onOpen(c)}
+                      className="flex flex-1 flex-col gap-3 p-5 text-left"
+                    >
+                      <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                        <span className="text-blood">
+                          {findCountry(c.countryCode)?.name ?? c.countryCode}
+                        </span>
+                        <span>age {c.age}</span>
+                      </div>
+                      <p className="font-serif text-xl leading-snug text-ink sm:text-[1.35rem]">
+                        “{c.text}”
                       </p>
-                    )}
-                    <div className="mt-auto flex items-center justify-between border-t border-ink/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
-                      <span>{CATEGORY_LABELS[c.category].toLowerCase()}</span>
-                      <span className="flex items-center gap-3">
-                        <span className="text-amber">
-                          {respN} response{respN === 1 ? "" : "s"}
+                      {c.original && (
+                        <p className="font-mono text-[10px] italic leading-relaxed text-ink/45">
+                          {c.original.lang}: “{c.original.text}”
+                        </p>
+                      )}
+                      <div className="mt-auto flex items-center justify-between border-t border-ink/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                        <span>{CATEGORY_LABELS[c.category].toLowerCase()}</span>
+                        <span className="flex items-center gap-3">
+                          <span className="text-amber">
+                            {respN} response{respN === 1 ? "" : "s"}
+                          </span>
+                          <span className="text-ink/40">
+                            {mounted ? relTime(c.ts) : "—"} ago
+                          </span>
                         </span>
-                        <span className="text-ink/40">
-                          {mounted ? relTime(c.ts) : "—"} ago
-                        </span>
-                      </span>
-                    </div>
-                  </button>
+                      </div>
+                    </button>
+
+                    {/* vote pill, separate region so its clicks don't open the drawer */}
+                    <VotePill
+                      concernId={c.id}
+                      count={(c.upvotes ?? 0) + (scoreDelta[c.id] ?? 0)}
+                      voted={myVotes[c.id] === 1}
+                      onVote={vote}
+                    />
+                  </div>
                 </motion.li>
               );
             })}
@@ -306,6 +376,40 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
         )}
       </div>
     </section>
+  );
+}
+
+function VotePill({
+  concernId,
+  count,
+  voted,
+  onVote,
+}: {
+  concernId: string;
+  count: number;
+  voted: boolean;
+  onVote: (id: string, value: 1 | -1) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onVote(concernId, 1)}
+      aria-label={voted ? "you resonated with this" : "resonate"}
+      disabled={voted}
+      className={`flex items-center justify-between border-t border-ink/10 px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] transition ${
+        voted
+          ? "cursor-default bg-blood text-bone"
+          : "text-ink/55 hover:bg-ink hover:text-bone"
+      }`}
+    >
+      <span className="flex items-center gap-2">
+        <span className="text-base leading-none">↑</span>
+        <span className="tabular-nums">{count}</span>
+      </span>
+      <span className="text-[9px] tracking-[0.22em]">
+        {voted ? "this resonated" : "does this resonate?"}
+      </span>
+    </button>
   );
 }
 

@@ -19,6 +19,9 @@ type Row = {
   original_text?: string | null;
   category: string;
   created_at: string;
+  score?: number;
+  upvotes?: number;
+  downvotes?: number;
 };
 
 const headers = (key: string) => ({
@@ -91,7 +94,69 @@ type SolRow = {
   original_lang?: string | null;
   original_text?: string | null;
   created_at: string;
+  score?: number;
+  upvotes?: number;
+  downvotes?: number;
 };
+
+// Upsert (concern_id, ip_hash) → value, replaces existing vote if present.
+export async function upsertConcernVote(input: {
+  concern_id: string;
+  ip_hash: string;
+  value: 1 | -1;
+}): Promise<boolean> {
+  const base = process.env[URL_KEY];
+  const k = process.env[SERVICE_KEY];
+  if (!base || !k) return false;
+  const r = await fetch(
+    `${base}/rest/v1/concern_votes?on_conflict=concern_id,ip_hash`,
+    {
+      method: "POST",
+      headers: {
+        ...headers(k),
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(input),
+    },
+  );
+  return r.ok;
+}
+
+export async function upsertSolutionVote(input: {
+  solution_id: string;
+  ip_hash: string;
+  value: 1 | -1;
+}): Promise<boolean> {
+  const base = process.env[URL_KEY];
+  const k = process.env[SERVICE_KEY];
+  if (!base || !k) return false;
+  const r = await fetch(
+    `${base}/rest/v1/solution_votes?on_conflict=solution_id,ip_hash`,
+    {
+      method: "POST",
+      headers: {
+        ...headers(k),
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(input),
+    },
+  );
+  return r.ok;
+}
+
+export async function recentVotesByIp(ipHash: string): Promise<number> {
+  const base = process.env[URL_KEY];
+  const k = process.env[SERVICE_KEY];
+  if (!base || !k) return 0;
+  const r = await fetch(`${base}/rest/v1/rpc/recent_votes_for_ip`, {
+    method: "POST",
+    headers: headers(k),
+    body: JSON.stringify({ p_ip_hash: ipHash }),
+  });
+  if (!r.ok) return 0;
+  const v = await r.json();
+  return typeof v === "number" ? v : 0;
+}
 
 export async function fetchSolutions(limit = 200): Promise<SolRow[]> {
   const base = process.env[URL_KEY];

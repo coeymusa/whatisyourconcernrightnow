@@ -70,6 +70,10 @@ export type Concern = {
   ts: number; // unix ms
   // when the original was non-english, keep it for the "see original" affordance
   original?: { lang: string; text: string };
+  // vote totals (computed by the public view in Supabase)
+  score?: number;
+  upvotes?: number;
+  downvotes?: number;
 };
 
 export type Solution = {
@@ -81,4 +85,7 @@ export type Solution = {
   text: string;
   ts: number;
   original?: { lang: string; text: string };
+  score?: number;
+  upvotes?: number;
+  downvotes?: number;
 };

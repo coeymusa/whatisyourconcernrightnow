@@ -11,6 +11,7 @@ import {
 import { hashIp, rateLimitOk } from "../../lib/rate-limit";
 import { verifyTurnstile } from "../../lib/turnstile";
 import { translateIfNeeded } from "../../lib/translate";
+import { moderate } from "../../lib/moderation";
 
 const STORE: Solution[] = [...SEED_SOLUTIONS];
 
@@ -75,6 +76,11 @@ export async function POST(req: Request) {
   }
   if (text.length < 4 || text.length > 280) {
     return NextResponse.json({ error: "text length" }, { status: 400 });
+  }
+
+  const mod = moderate(text);
+  if (!mod.ok) {
+    return NextResponse.json({ error: mod.reason }, { status: 400 });
   }
 
   const ip = clientIp(req);

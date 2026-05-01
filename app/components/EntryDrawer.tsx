@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { COUNTRIES, findCountry } from "../lib/countries";
 import { CATEGORY_LABELS, type Concern, type Solution } from "../lib/types";
+import { moderate } from "../lib/moderation";
 
 const MAX_LENGTH = 280;
 
@@ -29,6 +30,7 @@ export default function EntryDrawer({
   const [country, setCountry] = useState("");
   const [text, setText] = useState("");
   const [submittedId, setSubmittedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // reset form whenever drawer opens for a different concern
   useEffect(() => {
@@ -73,6 +75,12 @@ export default function EntryDrawer({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid || !concern) return;
+    const mod = moderate(text);
+    if (!mod.ok) {
+      setError(mod.reason);
+      return;
+    }
+    setError(null);
     onSubmitSolution({
       concernId: concern.id,
       age: ageNum,
@@ -248,6 +256,11 @@ export default function EntryDrawer({
                       {text.length}/{MAX_LENGTH}
                     </span>
                   </div>
+                  {error && (
+                    <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-blood">
+                      ⚠ {error}
+                    </div>
+                  )}
                   <button
                     type="submit"
                     disabled={!valid}
