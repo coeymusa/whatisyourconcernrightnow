@@ -120,13 +120,15 @@ html, body {
 }
 .dotted-input::placeholder { color: var(--color-mist); font-style: italic; }
 
-/* big textarea variant */
+/* big textarea variant — auto-grow handled by JS, drag-resize allowed */
 textarea.dotted-input {
   border-bottom: 1.5px dotted var(--color-ink);
   text-align: left;
-  resize: none;
+  resize: vertical;
   width: 100%;
   line-height: 1.45;
+  min-height: 4.5rem;
+  max-height: 22rem;
 }
 
 /* scroll-snap newsstand */
@@ -276,9 +278,11 @@ textarea.dotted-input {
 textarea.dotted-input-dark {
   border-bottom: 1.5px dotted rgba(250, 246, 237, 0.3);
   text-align: left;
-  resize: none;
+  resize: vertical;
   width: 100%;
   line-height: 1.45;
+  min-height: 4.5rem;
+  max-height: 22rem;
 }
 
 /* country select option — fix dark-bg select */

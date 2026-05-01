@@ -26,6 +26,7 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
   const [text, setText] = useState("");
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // hydrate prefs once mounted
@@ -54,19 +55,24 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
 
   function handleSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    if (!valid) return;
+    if (!valid || submitting) return;
     const mod = moderate(text);
     if (!mod.ok) {
       setError(mod.reason);
       return;
     }
     setError(null);
+    setSubmitting(true);
     const cat = classify(text);
     onSubmit({ age: ageNum, countryCode: country, text, category: cat });
     savePrefs({ age: ageNum, countryCode: country });
     setText("");
     setDone(true);
     window.setTimeout(() => setDone(false), 2400);
+    // re-enable after the round-trip should have settled, so spamming the
+    // button can't fire duplicate POSTs but the user can still submit again
+    // when they actually want to.
+    window.setTimeout(() => setSubmitting(false), 1500);
     inputRef.current?.blur();
   }
 
@@ -115,10 +121,17 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
         <textarea
           ref={inputRef}
-          rows={1}
+          rows={3}
           onKeyDown={onKey}
           value={text}
-          onChange={(e) => setText(e.target.value.slice(0, MAX))}
+          onChange={(e) => {
+            setText(e.target.value.slice(0, MAX));
+            // auto-grow the textarea up to its max-height; user can still
+            // drag the corner to resize beyond / below this baseline.
+            const t = e.target as HTMLTextAreaElement;
+            t.style.height = "auto";
+            t.style.height = `${Math.min(t.scrollHeight, 352)}px`;
+          }}
           placeholder="what's on your mind, right now?"
           className="dotted-input-dark grow font-serif text-2xl italic leading-snug placeholder:italic sm:text-3xl"
           aria-label="your concern"
@@ -129,11 +142,11 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
           </span>
           <button
             type="submit"
-            disabled={!valid}
+            disabled={!valid || submitting}
             className="group relative inline-flex items-center gap-2 bg-blood px-5 py-2.5 font-mono text-[10px] uppercase tracking-[0.3em] text-bone transition disabled:cursor-not-allowed disabled:opacity-40 hover:bg-bone hover:text-blood"
           >
-            post anonymously
-            <span aria-hidden>→</span>
+            {submitting ? "posting…" : "post anonymously"}
+            <span aria-hidden>{submitting ? "·" : "→"}</span>
           </button>
         </div>
       </div>

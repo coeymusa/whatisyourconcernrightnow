@@ -31,6 +31,7 @@ export default function EntryDrawer({
   const [text, setText] = useState("");
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // reset form whenever drawer opens for a different concern
   useEffect(() => {
@@ -74,13 +75,14 @@ export default function EntryDrawer({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!valid || !concern) return;
+    if (!valid || !concern || submitting) return;
     const mod = moderate(text);
     if (!mod.ok) {
       setError(mod.reason);
       return;
     }
     setError(null);
+    setSubmitting(true);
     onSubmitSolution({
       concernId: concern.id,
       age: ageNum,
@@ -89,6 +91,7 @@ export default function EntryDrawer({
     });
     setSubmittedId(`${Date.now()}`);
     setText("");
+    window.setTimeout(() => setSubmitting(false), 1500);
   }
 
   return (
@@ -263,10 +266,10 @@ export default function EntryDrawer({
                   )}
                   <button
                     type="submit"
-                    disabled={!valid}
+                    disabled={!valid || submitting}
                     className="group inline-flex items-center gap-3 bg-amber px-7 py-3.5 font-mono text-xs uppercase tracking-[0.3em] text-ink transition hover:bg-ink hover:text-amber disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <span>offer this response</span>
+                    <span>{submitting ? "sending…" : "offer this response"}</span>
                     <span aria-hidden>→</span>
                   </button>
                 </form>
