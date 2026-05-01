@@ -51,8 +51,10 @@ export function useConcernRecord() {
   }, []);
 
   // Live polling — efficient version.
-  //   • Tracks the latest seen ts per stream and sends ?since=<ts>, so
-  //     after the initial load we usually get back an empty array.
+  //   • Most polls send ?since=<ts> and get back only NEW rows.
+  //   • Every 5th poll skips the cursor and re-fetches the full window so
+  //     existing rows get updated vote counts (since=cursor wouldn't pick
+  //     them up because their ts didn't change when someone voted).
   //   • Pauses while the tab is hidden so backgrounded tabs cost nothing.
   //   • Exponential backoff on errors (20s → 40 → 80 → … capped at 5min).
   //   • Server response is edge-cached for 10s, so all clients in a region
@@ -61,11 +63,15 @@ export function useConcernRecord() {
     let cancelled = false;
     let timer: number | undefined;
     let backoff = 20_000;
+    let pollCount = 0;
     const MAX_BACKOFF = 5 * 60 * 1000;
+    const FULL_REFRESH_EVERY = 5; // every 5th poll = ~100s
     const sinceConcerns = { current: 0 };
     const sinceSolutions = { current: 0 };
 
-    function mergeBy<T extends { id: string }>(prev: T[], incoming: T[]): T[] {
+    // Append-only merge — used for since-cursor responses where everything
+    // returned is brand new.
+    function appendNew<T extends { id: string }>(prev: T[], incoming: T[]): T[] {
       if (incoming.length === 0) return prev;
       const seen = new Set(prev.map((x) => x.id));
       const fresh = incoming.filter((x) => !seen.has(x.id));
@@ -73,17 +79,44 @@ export function useConcernRecord() {
       return [...prev, ...fresh];
     }
 
+    // Replace-or-append merge — used for full refreshes where existing
+    // rows might have new vote counts.
+    function mergeOrReplace<T extends { id: string }>(
+      prev: T[],
+      incoming: T[],
+    ): T[] {
+      if (incoming.length === 0) return prev;
+      const incomingById = new Map(incoming.map((x) => [x.id, x]));
+      const seen = new Set<string>();
+      const merged = prev.map((p) => {
+        const fresh = incomingById.get(p.id);
+        if (fresh) {
+          seen.add(p.id);
+          return fresh;
+        }
+        return p;
+      });
+      for (const x of incoming) {
+        if (!seen.has(x.id)) merged.push(x);
+      }
+      return merged;
+    }
+
     async function pollOnce() {
       if (cancelled) return;
-      // skip while the tab is hidden — saves bandwidth + Supabase reads
       if (typeof document !== "undefined" && document.hidden) return;
 
-      const cUrl = sinceConcerns.current
-        ? `/api/concerns?since=${sinceConcerns.current}`
-        : "/api/concerns";
-      const sUrl = sinceSolutions.current
-        ? `/api/solutions?since=${sinceSolutions.current}`
-        : "/api/solutions";
+      pollCount++;
+      const fullRefresh = pollCount % FULL_REFRESH_EVERY === 0;
+
+      const cUrl =
+        fullRefresh || !sinceConcerns.current
+          ? "/api/concerns"
+          : `/api/concerns?since=${sinceConcerns.current}`;
+      const sUrl =
+        fullRefresh || !sinceSolutions.current
+          ? "/api/solutions"
+          : `/api/solutions?since=${sinceSolutions.current}`;
 
       const [cRes, sRes] = await Promise.all([fetch(cUrl), fetch(sUrl)]);
       if (cancelled) return;
@@ -92,14 +125,22 @@ export function useConcernRecord() {
       const sData = (await sRes.json()) as { solutions?: Solution[] };
 
       if (cData.concerns?.length) {
-        setConcerns((prev) => mergeBy(prev, cData.concerns!));
+        setConcerns((prev) =>
+          fullRefresh
+            ? mergeOrReplace(prev, cData.concerns!)
+            : appendNew(prev, cData.concerns!),
+        );
         sinceConcerns.current = Math.max(
           sinceConcerns.current,
           ...cData.concerns.map((c) => c.ts),
         );
       }
       if (sData.solutions?.length) {
-        setSolutions((prev) => mergeBy(prev, sData.solutions!));
+        setSolutions((prev) =>
+          fullRefresh
+            ? mergeOrReplace(prev, sData.solutions!)
+            : appendNew(prev, sData.solutions!),
+        );
         sinceSolutions.current = Math.max(
           sinceSolutions.current,
           ...sData.solutions.map((s) => s.ts),

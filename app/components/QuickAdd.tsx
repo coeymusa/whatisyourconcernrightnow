@@ -122,6 +122,7 @@ export default function QuickAdd({ onSubmit, initialCountry }: Props) {
         <textarea
           ref={inputRef}
           rows={3}
+          maxLength={MAX}
           onKeyDown={onKey}
           value={text}
           onChange={(e) => {
