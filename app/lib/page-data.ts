@@ -1,10 +1,10 @@
 import type { Concern, ConcernCategory } from "./types";
 import { fetchByCategory, fetchByCountry, hasSupabase } from "./supabase";
-import { SEED_CONCERNS } from "./seed";
 
-// When Supabase is configured, we read live rows. When it isn't (local dev,
-// fresh deploy), we fall back to the seed dataset filtered by country/topic
-// so country and topic pages always have content — never thin or empty.
+// Anonymous-voices fetchers used by /world/[code] and /topics/[category].
+// These return only real user submissions from Supabase. When Supabase
+// isn't configured (local dev, fresh deploy), they return [] — pages then
+// rely on the public-discourse section to carry the content load.
 
 function rowToConcern(r: {
   id: string;
@@ -30,26 +30,16 @@ export async function getConcernsByCountry(
   code: string,
   limit = 40,
 ): Promise<Concern[]> {
-  const upper = code.toUpperCase();
-  if (hasSupabase()) {
-    const rows = await fetchByCountry(upper, limit);
-    return rows.map(rowToConcern);
-  }
-  // Local / preview fallback — show seed entries from this country.
-  return SEED_CONCERNS.filter((c) => c.countryCode === upper)
-    .sort((a, b) => b.ts - a.ts)
-    .slice(0, limit);
+  if (!hasSupabase()) return [];
+  const rows = await fetchByCountry(code.toUpperCase(), limit);
+  return rows.map(rowToConcern);
 }
 
 export async function getConcernsByCategory(
   category: ConcernCategory,
   limit = 40,
 ): Promise<Concern[]> {
-  if (hasSupabase()) {
-    const rows = await fetchByCategory(category, limit);
-    return rows.map(rowToConcern);
-  }
-  return SEED_CONCERNS.filter((c) => c.category === category)
-    .sort((a, b) => b.ts - a.ts)
-    .slice(0, limit);
+  if (!hasSupabase()) return [];
+  const rows = await fetchByCategory(category, limit);
+  return rows.map(rowToConcern);
 }

@@ -9,6 +9,7 @@ import {
 } from "../../lib/types";
 import { findCountry } from "../../lib/countries";
 import { getConcernsByCategory } from "../../lib/page-data";
+import { getTopicSignals } from "../../lib/public-signals";
 import {
   Breadcrumb,
   Colophon,
@@ -19,6 +20,7 @@ import {
   StatRow,
   TopBar,
 } from "../../components/editorial";
+import PublicDiscourseList from "../../components/PublicDiscourseList";
 
 const SITE_URL = "https://whatisyourconcern.com";
 
@@ -28,7 +30,7 @@ export function generateStaticParams() {
   }));
 }
 export const dynamicParams = false;
-export const revalidate = 600;
+export const revalidate = 1800;
 
 type Props = { params: Promise<{ category: string }> };
 
@@ -71,14 +73,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const label = CATEGORY_LABELS[category];
   const url = `${SITE_URL}/topics/${category}`;
   return {
-    title: `Concerns about ${label.toLowerCase()}`,
-    description: `Anonymous concerns from people around the world about ${label.toLowerCase()}. ${TOPIC_BLURB[category] ?? ""}`,
+    title: `${label} · the record`,
+    description: `What the world is saying about ${label.toLowerCase()} — public discourse and anonymous voices, gathered in one place. ${TOPIC_BLURB[category] ?? ""}`,
     alternates: { canonical: url },
     openGraph: {
       title: `${label} · what is your concern?`,
       description:
         TOPIC_BLURB[category] ??
-        `Anonymous concerns about ${label.toLowerCase()}.`,
+        `What the world is saying about ${label.toLowerCase()}.`,
       url,
       type: "website",
     },
@@ -102,9 +104,12 @@ export default async function TopicPage({ params }: Props) {
   const label = CATEGORY_LABELS[category];
   const url = `${SITE_URL}/topics/${category}`;
   const fileNo = topicFileNo(category);
-  const concerns: Concern[] = await getConcernsByCategory(category, 40);
 
-  // Country mix — shows where this concern is loudest.
+  const [concerns, signals] = await Promise.all([
+    getConcernsByCategory(category, 40) as Promise<Concern[]>,
+    getTopicSignals(category, 14),
+  ]);
+
   const countryCount = new Map<string, number>();
   for (const c of concerns) {
     countryCount.set(c.countryCode, (countryCount.get(c.countryCode) ?? 0) + 1);
@@ -133,26 +138,40 @@ export default async function TopicPage({ params }: Props) {
   const collectionPage = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `Concerns about ${label.toLowerCase()}`,
+    name: `${label} · the record`,
     description: TOPIC_BLURB[category],
     url,
     isPartOf: { "@id": `${SITE_URL}/#site` },
     inLanguage: "en",
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: concerns.length,
-      itemListElement: concerns.slice(0, 10).map((c, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        item: {
-          "@type": "CreativeWork",
-          name: c.text.slice(0, 80),
-          text: c.text,
-          inLanguage: "en",
-          dateCreated: new Date(c.ts).toISOString(),
-          author: { "@type": "Person", name: "Anonymous" },
-        },
-      })),
+      numberOfItems: signals.length + concerns.length,
+      itemListElement: [
+        ...signals.slice(0, 10).map((s, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          item: {
+            "@type": "NewsArticle",
+            headline: s.title,
+            url: s.url,
+            datePublished: new Date(s.ts).toISOString(),
+            publisher: { "@type": "Organization", name: s.sourceLabel },
+            inLanguage: "en",
+          },
+        })),
+        ...concerns.slice(0, 10).map((c, i) => ({
+          "@type": "ListItem",
+          position: signals.slice(0, 10).length + i + 1,
+          item: {
+            "@type": "CreativeWork",
+            name: c.text.slice(0, 80),
+            text: c.text,
+            inLanguage: "en",
+            dateCreated: new Date(c.ts).toISOString(),
+            author: { "@type": "Person", name: "Anonymous" },
+          },
+        })),
+      ],
     },
   };
 
@@ -201,74 +220,117 @@ export default async function TopicPage({ params }: Props) {
           tone="paper"
           items={[
             {
-              label: "voices on this topic",
-              value: concerns.length.toLocaleString(),
+              label: "public signals",
+              value: signals.length.toLocaleString(),
               accent: "blood",
+            },
+            {
+              label: "anonymous voices",
+              value: concerns.length.toLocaleString(),
+              accent: "amber",
             },
             {
               label: "topic code",
               value: `X.${fileNo}`,
             },
             {
-              label: "loudest country",
-              value: topCountries[0]
-                ? findCountry(topCountries[0][0])?.name.split(" ")[0] ?? topCountries[0][0]
-                : "—",
-              accent: "amber",
-            },
-            {
               label: "last entry",
-              value: latest ? relativeDate(latest.ts) : "—",
+              value: latest
+                ? relativeDate(latest.ts)
+                : signals[0]
+                  ? relativeDate(signals[0].ts)
+                  : "—",
             },
           ]}
         />
 
-        {concerns.length > 0 ? (
-          <ol className="mt-20 space-y-14">
-            {concerns.map((c, i) => {
-              const country = findCountry(c.countryCode);
-              return (
-                <li key={c.id} className="relative">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/40">
-                    no. {String(i + 1).padStart(3, "0")} — anon dispatch
-                  </div>
-                  <blockquote className="mt-3 font-serif text-2xl leading-[1.18] text-ink sm:text-3xl">
-                    &ldquo;{c.text}&rdquo;
-                  </blockquote>
-                  <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink/15 pt-3 font-mono text-[11px] uppercase tracking-[0.22em] text-ink/55">
-                    {country ? (
-                      <Link
-                        href={`/world/${country.code}`}
-                        className="hover:text-ink"
-                      >
-                        {country.name}
-                      </Link>
-                    ) : (
-                      <span>{c.countryCode}</span>
-                    )}
-                    <span className="text-ink/30">·</span>
-                    <span>ages {c.bracket}</span>
-                    <span className="text-ink/30">·</span>
-                    <span>{relativeDate(c.ts)}</span>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        ) : (
-          <div className="mt-20 border-t border-ink/15 pt-12">
-            <p className="font-serif text-2xl italic leading-snug text-ink-mid sm:text-3xl">
-              No concerns have been classified under this topic yet.
+        {/* §  Public discourse — real, sourced */}
+        <section className="mt-20">
+          <div className="flex items-baseline gap-4 border-b border-ink/15 pb-4">
+            <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
+              § I
+            </span>
+            <h2 className="font-serif text-3xl italic leading-tight text-ink sm:text-4xl">
+              On the wire — {label.toLowerCase()}
+            </h2>
+          </div>
+          <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
+            Top threads and stories on {label.toLowerCase()} from public
+            sources right now — Reddit, Hacker News, the press. Each entry
+            links back to its origin.
+          </p>
+          <div className="mt-10">
+            <PublicDiscourseList signals={signals} />
+          </div>
+        </section>
+
+        {/* §  Anonymous voices — only when present */}
+        {concerns.length > 0 && (
+          <section className="mt-24">
+            <div className="flex items-baseline gap-4 border-b border-ink/15 pb-4">
+              <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
+                § II
+              </span>
+              <h2 className="font-serif text-3xl italic leading-tight text-ink sm:text-4xl">
+                Anonymous voices on {label.toLowerCase()}
+              </h2>
+            </div>
+            <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
+              Concerns submitted to <em>the record</em>, classified under
+              this topic. Anonymous, unedited, in the order they arrived.
+            </p>
+
+            <ol className="mt-10 space-y-12">
+              {concerns.map((c, i) => {
+                const country = findCountry(c.countryCode);
+                return (
+                  <li key={c.id} className="relative">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/40">
+                      no. {String(i + 1).padStart(3, "0")} — anon dispatch
+                    </div>
+                    <blockquote className="mt-3 font-serif text-2xl leading-[1.18] text-ink sm:text-3xl">
+                      &ldquo;{c.text}&rdquo;
+                    </blockquote>
+                    <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink/15 pt-3 font-mono text-[11px] uppercase tracking-[0.22em] text-ink/55">
+                      {country ? (
+                        <Link
+                          href={`/world/${country.code}`}
+                          className="hover:text-ink"
+                        >
+                          {country.name}
+                        </Link>
+                      ) : (
+                        <span>{c.countryCode}</span>
+                      )}
+                      <span className="text-ink/30">·</span>
+                      <span>ages {c.bracket}</span>
+                      <span className="text-ink/30">·</span>
+                      <span>{relativeDate(c.ts)}</span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
+
+        {concerns.length === 0 && (
+          <section className="mt-24 border-t border-ink/15 pt-12">
+            <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/55">
+              § II — anonymous voices
+            </div>
+            <p className="mt-4 font-serif text-2xl italic leading-snug text-ink-mid sm:text-3xl">
+              No anonymous voices on this topic yet.
               <br />
-              Be the first to put one on permanent record.
+              The first one on permanent record could be yours.
             </p>
             <Link
               href="/"
               className="mt-10 inline-flex items-baseline gap-3 font-mono text-xs uppercase tracking-[0.25em] text-ink"
             >
-              ↓ add your voice
+              ↓ add your voice — it takes 30 seconds
             </Link>
-          </div>
+          </section>
         )}
 
         {topCountries.length > 0 && (
@@ -308,9 +370,9 @@ export default async function TopicPage({ params }: Props) {
         tone="paper"
         phrases={[
           `${label.toLowerCase()} · the record`,
+          "press · reddit · hn · anon",
           "the world is listening",
           "no names · no accounts",
-          "an anonymous global record",
         ]}
       />
     </PageBg>

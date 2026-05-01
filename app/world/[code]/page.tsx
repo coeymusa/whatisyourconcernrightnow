@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { COUNTRIES, findCountry } from "../../lib/countries";
 import { getConcernsByCountry } from "../../lib/page-data";
+import { getCountrySignals } from "../../lib/public-signals";
 import { CATEGORY_LABELS, type ConcernCategory } from "../../lib/types";
 import {
   Breadcrumb,
@@ -14,14 +15,22 @@ import {
   StatRow,
   TopBar,
 } from "../../components/editorial";
+import PublicDiscourseList from "../../components/PublicDiscourseList";
 
 const SITE_URL = "https://whatisyourconcern.com";
 
+// Pre-render the top traffic countries at build time. Everything else is
+// generated on first request and cached via ISR — keeps the build fast and
+// avoids burst-rate-limiting external sources (GDELT etc.) during the build.
 export function generateStaticParams() {
-  return COUNTRIES.map((c) => ({ code: c.code }));
+  return [
+    "US", "GB", "CA", "AU", "IN", "BR", "JP", "DE", "FR", "MX",
+    "RU", "CN", "ZA", "NG", "ID", "PH", "TR", "IR", "EG", "KR",
+    "IT", "ES", "NL", "PL", "UA", "PK", "BD", "VN", "TH", "AR",
+  ].map((code) => ({ code }));
 }
-export const dynamicParams = false;
-export const revalidate = 600;
+export const dynamicParams = true;
+export const revalidate = 1800;
 
 type Props = { params: Promise<{ code: string }> };
 
@@ -31,19 +40,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!country) return {};
   const url = `${SITE_URL}/world/${country.code}`;
   return {
-    title: `Concerns from ${country.name}`,
-    description: `Anonymous concerns submitted by people in ${country.name}. What are people in ${country.name} afraid of, right now? An anonymous global record.`,
+    title: `${country.name} · the record`,
+    description: `What is ${country.name} concerned about right now? A live record of public discourse and anonymous voices from ${country.name} — news, threads, and concerns, in one place.`,
     alternates: { canonical: url },
     openGraph: {
-      title: `Concerns from ${country.name} · what is your concern?`,
-      description: `What are people in ${country.name} afraid of, right now?`,
+      title: `${country.name} · what is your concern?`,
+      description: `What is ${country.name} concerned about right now? Public discourse + anonymous voices from ${country.name}.`,
       url,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `Concerns from ${country.name}`,
-      description: `What are people in ${country.name} afraid of, right now?`,
+      title: `${country.name} · the record`,
+      description: `What is ${country.name} concerned about right now?`,
     },
   };
 }
@@ -58,8 +67,6 @@ function relativeDate(ts: number): string {
   return `${Math.floor(diffDays / 365)}y ago`;
 }
 
-// File-number for the country, padded to 3 digits, derived from the
-// country index in COUNTRIES. Used as a faux dossier number in the header.
 function fileNoFor(code: string): string {
   const i = COUNTRIES.findIndex((c) => c.code === code);
   return String(i + 1).padStart(3, "0");
@@ -70,11 +77,14 @@ export default async function CountryPage({ params }: Props) {
   const country = findCountry(code.toUpperCase());
   if (!country) notFound();
 
-  const concerns = await getConcernsByCountry(country.code, 40);
+  // Fetch in parallel — the page is no faster than the slowest source.
+  const [concerns, signals] = await Promise.all([
+    getConcernsByCountry(country.code, 40),
+    getCountrySignals(country.code, 12),
+  ]);
   const url = `${SITE_URL}/world/${country.code}`;
   const fileNo = fileNoFor(country.code);
 
-  // Topic mix — shows what this country tends to fear.
   const topicCount = new Map<ConcernCategory, number>();
   for (const c of concerns) {
     topicCount.set(c.category, (topicCount.get(c.category) ?? 0) + 1);
@@ -103,8 +113,8 @@ export default async function CountryPage({ params }: Props) {
   const collectionPage = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `Concerns from ${country.name}`,
-    description: `Anonymous concerns submitted by people in ${country.name}.`,
+    name: `${country.name} · the record`,
+    description: `Public discourse and anonymous concerns from ${country.name}.`,
     url,
     isPartOf: { "@id": `${SITE_URL}/#site` },
     inLanguage: "en",
@@ -115,20 +125,34 @@ export default async function CountryPage({ params }: Props) {
     },
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: concerns.length,
-      itemListElement: concerns.slice(0, 10).map((c, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        item: {
-          "@type": "CreativeWork",
-          name: c.text.slice(0, 80),
-          text: c.text,
-          inLanguage: "en",
-          dateCreated: new Date(c.ts).toISOString(),
-          locationCreated: { "@type": "Country", name: country.name },
-          author: { "@type": "Person", name: "Anonymous" },
-        },
-      })),
+      numberOfItems: signals.length + concerns.length,
+      itemListElement: [
+        ...signals.slice(0, 10).map((s, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          item: {
+            "@type": "NewsArticle",
+            headline: s.title,
+            url: s.url,
+            datePublished: new Date(s.ts).toISOString(),
+            publisher: { "@type": "Organization", name: s.sourceLabel },
+            inLanguage: "en",
+          },
+        })),
+        ...concerns.slice(0, 10).map((c, i) => ({
+          "@type": "ListItem",
+          position: signals.slice(0, 10).length + i + 1,
+          item: {
+            "@type": "CreativeWork",
+            name: c.text.slice(0, 80),
+            text: c.text,
+            inLanguage: "en",
+            dateCreated: new Date(c.ts).toISOString(),
+            locationCreated: { "@type": "Country", name: country.name },
+            author: { "@type": "Person", name: "Anonymous" },
+          },
+        })),
+      ],
     },
   };
 
@@ -165,132 +189,153 @@ export default async function CountryPage({ params }: Props) {
         </SectionMark>
 
         <h1 className="mt-5 font-serif text-[clamp(2.6rem,7vw,5.5rem)] italic leading-[0.95] tracking-[-0.01em]">
-          Concerns from
+          What is
           <br />
           <span className="not-italic">{country.name}</span>
-          <span className="italic">.</span>
+          <br />
+          <span className="text-blood">concerned about</span>
+          <span className="italic">?</span>
         </h1>
 
         <p className="mt-10 max-w-2xl font-serif text-xl leading-snug text-ink-mid sm:text-2xl">
-          {concerns.length > 0 ? (
-            <>
-              {concerns.length} anonymous{" "}
-              {concerns.length === 1 ? "voice" : "voices"} from{" "}
-              {country.name}, in the order they arrived. Each entry is a single
-              sentence, written by one person, never edited and never removed.
-            </>
-          ) : (
-            <>
-              The record from {country.name} is empty. Be the first voice to
-              go on permanent record from here.
-            </>
-          )}
+          A live record of what {country.name} is talking about right now —
+          news on the wire, public threads, and anonymous voices from inside
+          the country, gathered in one place. Updated continuously.
         </p>
 
         <StatRow
           tone="paper"
           items={[
             {
-              label: "voices recorded",
-              value: concerns.length.toLocaleString(),
+              label: "public signals",
+              value: signals.length.toLocaleString(),
               accent: "blood",
+            },
+            {
+              label: "anonymous voices",
+              value: concerns.length.toLocaleString(),
+              accent: "amber",
             },
             {
               label: "country code",
               value: country.code,
             },
             {
-              label: "top concern",
-              value: topTopics[0]
-                ? CATEGORY_LABELS[topTopics[0][0]].split(" ")[0]
-                : "—",
-              accent: "amber",
-            },
-            {
               label: "last entry",
-              value: latest ? relativeDate(latest.ts) : "—",
+              value: latest
+                ? relativeDate(latest.ts)
+                : signals[0]
+                  ? relativeDate(signals[0].ts)
+                  : "—",
             },
           ]}
         />
 
-        {concerns.length > 0 ? (
-          <ol className="mt-20 space-y-14">
-            {concerns.map((c, i) => (
-              <li key={c.id} className="relative">
-                <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/40">
-                  no. {String(i + 1).padStart(3, "0")} — anon dispatch
-                </div>
-                <blockquote className="mt-3 font-serif text-2xl leading-[1.18] text-ink sm:text-3xl">
-                  &ldquo;{c.text}&rdquo;
-                </blockquote>
-                <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink/15 pt-3 font-mono text-[11px] uppercase tracking-[0.22em] text-ink/55">
-                  <span>{country.name}</span>
-                  <span className="text-ink/30">·</span>
-                  <span>ages {c.bracket}</span>
-                  <span className="text-ink/30">·</span>
-                  <Link
-                    href={`/topics/${c.category}`}
-                    className="hover:text-ink"
-                  >
-                    {CATEGORY_LABELS[c.category].toLowerCase()}
-                  </Link>
-                  <span className="text-ink/30">·</span>
-                  <span>{relativeDate(c.ts)}</span>
-                </div>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <div className="mt-20 border-t border-ink/15 pt-12">
-            <p className="font-serif text-2xl italic leading-snug text-ink-mid sm:text-3xl">
-              The record from {country.name} is unwritten.
+        {/* §  Public discourse — real, sourced */}
+        <section className="mt-20">
+          <div className="flex items-baseline gap-4 border-b border-ink/15 pb-4">
+            <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
+              § I
+            </span>
+            <h2 className="font-serif text-3xl italic leading-tight text-ink sm:text-4xl">
+              On the wire — what {country.name} is saying publicly
+            </h2>
+          </div>
+          <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
+            Top news headlines, threads, and discussions tied to{" "}
+            {country.name} from public sources. Each entry is linked to its
+            origin so you can read it in full.
+          </p>
+          <div className="mt-10">
+            <PublicDiscourseList signals={signals} />
+          </div>
+        </section>
+
+        {/* §  Anonymous voices — only when present */}
+        {concerns.length > 0 && (
+          <section className="mt-24">
+            <div className="flex items-baseline gap-4 border-b border-ink/15 pb-4">
+              <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
+                § II
+              </span>
+              <h2 className="font-serif text-3xl italic leading-tight text-ink sm:text-4xl">
+                Anonymous voices from {country.name}
+              </h2>
+            </div>
+            <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
+              Concerns submitted to <em>the record</em> by people in{" "}
+              {country.name}. Anonymous, unedited, in the order they arrived.
+            </p>
+
+            <ol className="mt-10 space-y-12">
+              {concerns.map((c, i) => (
+                <li key={c.id} className="relative">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/40">
+                    no. {String(i + 1).padStart(3, "0")} — anon dispatch
+                  </div>
+                  <blockquote className="mt-3 font-serif text-2xl leading-[1.18] text-ink sm:text-3xl">
+                    &ldquo;{c.text}&rdquo;
+                  </blockquote>
+                  <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink/15 pt-3 font-mono text-[11px] uppercase tracking-[0.22em] text-ink/55">
+                    <span>{country.name}</span>
+                    <span className="text-ink/30">·</span>
+                    <span>ages {c.bracket}</span>
+                    <span className="text-ink/30">·</span>
+                    <Link
+                      href={`/topics/${c.category}`}
+                      className="hover:text-ink"
+                    >
+                      {CATEGORY_LABELS[c.category].toLowerCase()}
+                    </Link>
+                    <span className="text-ink/30">·</span>
+                    <span>{relativeDate(c.ts)}</span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {concerns.length === 0 && (
+          <section className="mt-24 border-t border-ink/15 pt-12">
+            <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/55">
+              § II — anonymous voices
+            </div>
+            <p className="mt-4 font-serif text-2xl italic leading-snug text-ink-mid sm:text-3xl">
+              No anonymous voices have been submitted from {country.name} yet.
               <br />
-              The first voice from here could be yours.
+              The first voice on permanent record could be yours.
             </p>
             <Link
               href="/"
               className="mt-10 inline-flex items-baseline gap-3 font-mono text-xs uppercase tracking-[0.25em] text-ink"
             >
-              <span className="relative">
-                ↓ add your voice
-                <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-100 bg-blood transition-transform duration-500" />
-              </span>
-              <span className="text-ink/40">it takes 30 seconds</span>
+              ↓ add your voice — it takes 30 seconds
             </Link>
-          </div>
+          </section>
         )}
 
+        {/* Appendix */}
         <section className="mt-24 border-t border-ink/15 pt-12">
           <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/55">
             § appendix — about this dossier
           </div>
           <h2 className="mt-4 font-serif text-3xl italic leading-tight text-ink sm:text-4xl">
-            About the record from {country.name}
+            About the {country.name} dossier
           </h2>
           <div className="mt-6 grid gap-8 font-sans text-base leading-relaxed text-ink-soft sm:grid-cols-2 sm:text-lg">
             <p>
-              Every entry above was written anonymously by one person in{" "}
-              {country.name}. They were not edited. They were not curated. They
-              are shown in the order they were submitted. Concerns submitted in
-              other languages were translated into English on the way in; the
-              originals are preserved on the record.
+              The wire pulls from GDELT (a global index of news in 100+
+              languages), the country's most active English-speaking
+              subreddit when one exists, and Hacker News when relevant.
+              Sources are clearly labelled and link back to the original.
+              We do not edit headlines.
             </p>
             <p>
-              If something here is also true for you,{" "}
-              <Link
-                href="/"
-                className="text-ink underline-offset-4 hover:underline"
-              >
-                add your own voice
-              </Link>{" "}
-              or{" "}
-              <Link
-                href="/world"
-                className="text-ink underline-offset-4 hover:underline"
-              >
-                browse the index of every country
-              </Link>
-              .
+              The anonymous voices section comes from contributors who
+              submitted a concern to <em>the record</em> from{" "}
+              {country.name}. Their entries are unedited and unattributed —
+              just an age bracket and a country.
             </p>
           </div>
 
@@ -324,10 +369,9 @@ export default async function CountryPage({ params }: Props) {
         tone="paper"
         phrases={[
           `${country.name} · the record`,
-          "an anonymous global record",
-          "one voice · one entry",
-          "no names · no accounts",
+          "press · reddit · anon dispatch",
           "the world is listening",
+          "no names · no accounts",
         ]}
       />
     </PageBg>
