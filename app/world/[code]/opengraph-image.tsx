@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { COUNTRIES, findCountry } from "../../lib/countries";
+import { fetchByCountry, hasSupabase } from "../../lib/supabase";
 
 // Runs on Node.js — Edge runtime conflicts with generateStaticParams.
 export const alt = "what is your concern? — country dossier";
@@ -28,6 +29,13 @@ export default async function CountryOG({ params }: Props) {
   ).padStart(3, "0");
   const fontSize =
     country.name.length > 18 ? 96 : country.name.length > 12 ? 116 : 140;
+
+  // Voice count for a richer OG card. Cheap query — limit 200 — and the
+  // result gets cached server-side via revalidate on the upstream fetcher.
+  const voiceRows = hasSupabase()
+    ? await fetchByCountry(country.code, 200)
+    : [];
+  const voiceCount = voiceRows.length;
 
   return new ImageResponse(
     (
@@ -135,13 +143,30 @@ export default async function CountryOG({ params }: Props) {
               whatisyourconcern.com
             </span>
           </div>
-          <div style={{ display: "flex", gap: 20 }}>
-            <span>press</span>
-            <span style={{ color: "#c7321b" }}>·</span>
-            <span>reddit</span>
-            <span style={{ color: "#c7321b" }}>·</span>
-            <span>anon dispatch</span>
-          </div>
+          {voiceCount > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+              <span style={{ color: "rgba(10,9,8,0.5)" }}>voices on the record</span>
+              <span
+                style={{
+                  fontFamily: "serif",
+                  fontStyle: "italic",
+                  fontSize: 36,
+                  color: "#c7321b",
+                  letterSpacing: -0.3,
+                }}
+              >
+                {voiceCount.toLocaleString()}
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 20 }}>
+              <span>press</span>
+              <span style={{ color: "#c7321b" }}>·</span>
+              <span>reddit</span>
+              <span style={{ color: "#c7321b" }}>·</span>
+              <span>anon dispatch</span>
+            </div>
+          )}
         </div>
       </div>
     ),
