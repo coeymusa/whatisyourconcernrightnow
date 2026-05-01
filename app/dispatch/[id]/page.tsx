@@ -312,7 +312,7 @@ export default async function DispatchPage({ params }: Props) {
           </section>
         )}
 
-        <div className="mt-20 border-t border-ink/15 pt-10">
+        <div className="mt-20 flex flex-wrap items-baseline gap-x-10 gap-y-4 border-t border-ink/15 pt-10">
           <Link
             href="/"
             className="group inline-flex items-baseline gap-3 font-mono text-xs uppercase tracking-[0.25em] text-ink"
@@ -321,7 +321,14 @@ export default async function DispatchPage({ params }: Props) {
               ↓ add your own voice
               <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-100 bg-blood" />
             </span>
-            <span className="text-ink/40">it takes 30 seconds</span>
+            <span className="text-ink/40">30 seconds</span>
+          </Link>
+          <Link
+            href="/random"
+            className="group inline-flex items-baseline gap-2 font-mono text-xs uppercase tracking-[0.25em] text-ink/65 hover:text-ink"
+          >
+            <span>stumble to another voice</span>
+            <span className="text-blood">→</span>
           </Link>
         </div>
 
