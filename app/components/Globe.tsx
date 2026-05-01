@@ -310,9 +310,10 @@ export default function Globe({
         y: e.clientY,
         rot: [...rotation] as [number, number],
       };
-      (e.currentTarget as Element & {
-        setPointerCapture?: (id: number) => void;
-      }).setPointerCapture?.(e.pointerId);
+      // Intentionally NOT calling setPointerCapture — it routes the
+      // subsequent pointerup to the SVG and can suppress the click event
+      // that should fire on the country path. The drag still works because
+      // the SVG itself is the pointer-event listener.
     },
     [rotation],
   );
@@ -321,8 +322,9 @@ export default function Globe({
     if (!dragRef.current) return;
     const dx = e.clientX - dragRef.current.x;
     const dy = e.clientY - dragRef.current.y;
-    // even tiny motion above the deadband counts as a drag (suppress click)
-    if (Math.abs(dx) + Math.abs(dy) > 4) dragMovedRef.current = true;
+    // generous deadband — fingers and trackpads jitter a few pixels on a
+    // tap, and we don't want to suppress the click+select that follows.
+    if (Math.hypot(dx, dy) > 9) dragMovedRef.current = true;
     const k = ROTATE_SENSITIVITY / Math.max(0.5, scaleFactor);
     const newLambda = dragRef.current.rot[0] + dx * k;
     const newPhi = Math.max(-88, Math.min(88, dragRef.current.rot[1] - dy * k));
