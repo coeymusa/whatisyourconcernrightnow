@@ -21,8 +21,16 @@ export type ModerationResult =
   // get a feedback signal that they tripped a filter.
   | { kind: "shadowban" };
 
-// Server-side: run all checks, including the silent slur shadowban.
-export function moderate(text: string): ModerationResult {
+// Joke-ages we shadowban silently (probably a 14-year-old being clever).
+// They get a "✓ recorded" toast + see their post in localStorage; nobody
+// else ever does.
+const JOKE_AGES = new Set([69, 420]);
+
+// Server-side: run all checks, including the silent slur + joke-age shadowban.
+export function moderate(
+  text: string,
+  ctx?: { age?: number },
+): ModerationResult {
   if (URL_RE.test(text)) {
     return { kind: "block", reason: "no website links — write the thought, not a URL" };
   }
@@ -30,6 +38,9 @@ export function moderate(text: string): ModerationResult {
     return { kind: "block", reason: "no @handles — keep it anonymous and self-contained" };
   }
   if (SLUR_RE.test(text)) {
+    return { kind: "shadowban" };
+  }
+  if (typeof ctx?.age === "number" && JOKE_AGES.has(ctx.age)) {
     return { kind: "shadowban" };
   }
   return { kind: "ok" };

@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "text length" }, { status: 400 });
   }
 
-  const mod = moderate(text);
+  const mod = moderate(text, { age });
   if (mod.kind === "block") {
     return NextResponse.json({ error: mod.reason }, { status: 400 });
   }
