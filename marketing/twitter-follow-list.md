@@ -1,128 +1,129 @@
 # Twitter / X — curated follow list for @whatisyourconcern
 
-Pick ~10/day over a week. Like 1–2 of their recent posts before you click follow on each — Twitter's anti-bot heuristics weight "engaged before following" heavily for new accounts. Don't follow more than ~50 in 24h or you'll get rate-limited / shadow-banned.
+The goal is **amplifiers**, not peers. People with audiences who, if they discover the site, will write/post about it, send it to their newsletter, or feature it — not other indie devs trying to grow their own following.
 
-Order is intentional: start with the **anchor accounts** (top of each section) — those are the ones most likely to follow you back or notice an engaged reply.
+Pick ~10/day over a week. Like 1–2 of their recent posts before you click follow. Twitter's anti-bot heuristics weight "engaged before following" heavily for new accounts. Don't follow >50 in 24h.
 
 ---
 
-## Indie makers / build-in-public
+## Anchor 10 — follow these first
 
-The site is a one-weekend ship → this audience will *get it*.
-
-| Handle | Why |
-|---|---|
-| `@rauchg` | Vercel CEO. The platform you deployed on. Posts technical taste + maker support. |
-| `@leerob` | Next.js DevRel. Posts code, ships ideas, replies to small accounts. |
-| `@levelsio` | The indie-maker icon. Solo SaaS in public. Big audience that follows back if you engage. |
-| `@theo` | T3 stack creator. Loud community of devs who'd love the SVG-globe angle. |
-| `@swyx` | AI engineering, dev tools. Curates ideas, cross-posts thoughtful work. |
-| `@marckohlbrugge` | Founder of WIP. Indie-maker mafia. |
-| `@KentCDodds` | React educator. Big React/Next audience. |
-| `@dr_cintas` | Indie maker + design. Active replier. |
-| `@arvidkahl` | Bootstrapper. Posts about small SaaS launches. |
-| `@yongfook` | Bannerbear founder. Indie maker veteran. |
-
-## Data viz / map / d3-geo
-
-The technical hook for the sub-Reddit r/dataisbeautiful crowd.
+If you only have 15 minutes, these are the highest-leverage:
 
 | Handle | Why |
 |---|---|
-| `@mbostock` | Created d3 (which the globe uses). The exact person who'd appreciate a pure-SVG orthographic. |
-| `@observablehq` | Observable platform. Loves novel data viz. |
-| `@nadiehbremer` | Visual Cinnamon. Globe / data viz mastermind. |
-| `@ChartingCanada` | Canadian data viz; respected in the niche. |
-| `@neilrkaye` | Climate data viz, often goes viral. |
-| `@karim_douieb` | Data viz designer (the famous US election cartogram). |
-| `@HansAddleman` | Data viz, NYT alum. |
-| `@flowingdata` | Nathan Yau. Old-guard data viz curator. |
-| `@kennethfield` | Cartographer. Will appreciate the orthographic projection choice. |
-| `@axisofeval` | Quirky data viz / academic. |
+| `@kottke` | Jason Kottke. *The* OG internet curator since 1998. If he posts your link, you're done. |
+| `@mariapopova` | Brain Pickings / The Marginalian. Massive thoughtful audience that loves projects exactly like yours. |
+| `@waitbutwhy` | Tim Urban. Big-think viral writer. His audience is exactly your readership. |
+| `@taylorlorenz` | NYT internet-culture reporter. Writes about novel internet phenomena. |
+| `@charliewarzel` | Atlantic columnist. Anonymity, online culture, mental health — your beat. |
+| `@KevinRoose` | NYT tech writer. Often features unusual sites in *Hard Fork*. |
+| `@derekthompson` | Atlantic, *Plain English* podcast. Generational anxiety / loneliness is his beat. |
+| `@ezraklein` | NYT podcast. Will discuss novel cultural phenomena. |
+| `@KurzgesagtTeam` | Massive YouTube + Twitter audience that cares about humanity-scale topics. |
+| `@SahilBloom` | Writer with 1M+ followers. Posts thoughtful internet finds. |
 
-## Internet weirdness / curated cool stuff
+---
 
-These accounts CURATE for an audience that loves exactly what your site is.
+## Internet culture curators
+
+The accounts that exist specifically to surface novel internet experiences. Highest-leverage if even one of them posts your link.
 
 | Handle | Why |
 |---|---|
-| `@somnathbm` | Curator of strange/beautiful websites. |
-| `@brianlovin` | Design Twitter. Posts about novel sites + design experiments. |
+| `@kottke` | (anchor) |
+| `@mariapopova` | (anchor) |
+| `@waitbutwhy` | (anchor) |
 | `@SitesIneedToVisit` | Niche curator account. |
-| `@thekarunyapw` | Curates novel internet experiments. |
-| `@neglected_works` | Internet ephemera + lost media. |
-| `@_jagtoshan` | Aesthetic web sites. |
+| `@bldgblog` | Geoff Manaugh. Architecture + internet weirdness. |
+| `@aeonmag` | Aeon magazine. Big-think editorial. |
+| `@longreads` | Longreads. Curates depth content. |
+| `@RealLifeMag` | Internet culture magazine. |
+| `@thecreativindep` | The Creative Independent — features projects like yours. |
 
-## Mental health / philosophy / global writers
+## Cultural commentators / journalists
 
-The thematic audience — what the site is *about*.
-
-| Handle | Why |
-|---|---|
-| `@vgr` | Venkat Rao, Ribbonfarm. Big-think philosophy writer. |
-| `@anildash` | Thoughtful technologist. Has written about anonymous spaces. |
-| `@gwern` | Long-form thinker, internet researcher. |
-| `@maxc` | Sometimes writes about loneliness / online culture. |
-| `@matt_levine` | Bloomberg writer, tweets thoughtful asides. |
-| `@robinhanson` | Philosopher / economist. |
-| `@vasalzbergova` | Mental health adjacent, big audience. |
-| `@KateMurphyNY` | Author of *You're Not Listening* — your site is literally a listening room. |
-
-## Climate / future / generational
-
-Some of the strongest concerns will be climate. Tap that audience too.
+Writers with reach who could write a column or feature.
 
 | Handle | Why |
 |---|---|
-| `@hannahritchie` | Our World in Data. Climate optimist with data. |
-| `@DWallaceWells` | NYT climate, *Uninhabitable Earth*. |
-| `@ClimateHuman` | Peter Kalmus, climate scientist + activist. |
-| `@MichaelEMann` | Climate scientist, big audience. |
+| `@taylorlorenz` | (anchor) |
+| `@charliewarzel` | (anchor) |
+| `@KevinRoose` | (anchor) |
+| `@KashHill` | NYT tech reporter. Privacy + anonymous internet. |
+| `@anildash` | Veteran technologist with cultural reach. Has championed anonymous spaces before. |
+| `@evgenymorozov` | Tech critic. Will engage with the "owned by nobody" angle. |
+| `@zeynep` | Zeynep Tufekci. Sociologist of tech, NYT columnist. |
+| `@danwilliams_` | Writer on epistemics + culture. |
+
+## Mental health / loneliness / generational anxiety
+
+The thematic audience — what your site is *about*.
+
+| Handle | Why |
+|---|---|
+| `@derekthompson` | (anchor) |
+| `@KateMurphyNY` | Wrote *You're Not Listening* — your site is literally a listening room. |
+| `@JonHaidt` | Jonathan Haidt, *The Anxious Generation*. The exact author who'd amplify this. |
+| `@drvivek_murthy` | Former US Surgeon General, advocate on loneliness. |
+| `@bradstulberg` | Well-being writer with a big newsletter. |
+| `@CalNewport` | *Deep Work* author. Critical of attention economy. |
+| `@SusanCainAuthor` | *Quiet*. Introvert / interior-life audience. |
+| `@drmichaeljmurphy` | Wellbeing professor. |
+
+## Big-think writers
+
+Audiences that read serious essays and care about humanity-scale topics.
+
+| Handle | Why |
+|---|---|
+| `@ezraklein` | (anchor) |
+| `@SahilBloom` | (anchor) |
+| `@vgr` | Venkat Rao, Ribbonfarm. Big-think philosophical writer. |
+| `@noahpinion` | Noah Smith. Economist with a 200k+ Substack. |
+| `@arnold_kling` | Substack veteran with serious audience. |
+| `@RobinHanson` | Philosopher / economist. |
+| `@TomChivers` | Science writer, *Semafor*. |
+| `@johnstokes` | Former Ars Technica, now Substack. Tech + culture. |
+| `@_yuval_noah_harari` | Yuval Harari. *Sapiens* author. Civilization-scale. |
+
+## Climate / global / future writers
+
+Climate dominates the seed concerns; tap that audience.
+
+| Handle | Why |
+|---|---|
+| `@_HannahRitchie` | Our World in Data. Has a knack for amplifying optimistic-but-honest projects. |
+| `@DWallaceWells` | NYT climate writer. |
+| `@leahcstokes` | Climate scientist with public reach. |
+| `@Revkin` | Andrew Revkin, environmental journalist. |
 | `@KateAronoff` | Climate journalist. |
-| `@GenZForChange` | Gen-Z movement. The 13–22 bracket on your site. |
+| `@ClimateHuman` | Peter Kalmus, climate scientist + activist. |
 
-## Next.js / open source / dev tools
+## YouTube / video voices
 
-The post on r/nextjs will catch some of these; pre-following primes them.
+If even one of these mentions it on-camera, the spike is real.
 
 | Handle | Why |
 |---|---|
-| `@vercel` | Platform. |
-| `@nextjs` | Framework. |
-| `@dan_abramov` | React core, ex-Vercel. Influential. |
-| `@cassidoo` | Cassidy Williams. Dev educator, very replier-friendly. |
-| `@argyleink` | Adam Argyle. CSS / web platform. |
-| `@addyosmani` | Google Chrome perf. Sometimes amplifies novel tech. |
-| `@drosenbaum` | Dev community. |
+| `@KurzgesagtTeam` | (anchor) |
+| `@TomScottGo` | Tom Scott. Loves novel websites. |
+| `@veritasium` | Derek Muller. Big-think science. |
+| `@LexFridman` | Massive interview audience. |
+| `@MrBeast` | Long shot but he occasionally amplifies social-good projects. |
 
 ---
 
-## Anchor priority — follow these 10 first
-
-If you only have 15 minutes:
-
-1. `@rauchg`
-2. `@leerob`
-3. `@levelsio`
-4. `@mbostock`
-5. `@nadiehbremer`
-6. `@somnathbm`
-7. `@vgr`
-8. `@hannahritchie`
-9. `@theo`
-10. `@cassidoo`
-
-These cover the spread of your potential audiences and several are known repliers / amplifiers.
-
----
-
-## Engagement script (per account)
+## Engagement script — same as before, repeated because it matters
 
 Don't just follow. For each:
+
 1. Open their profile
 2. Skim the last 5–10 tweets
 3. Like 1–2 that genuinely resonate
-4. Reply to ONE with something specific (not "great post!"). Pick one a day; reply substantively. Mention the site only if it's *truly* relevant to what they posted.
+4. Reply to ONE with something specific (not "great post!"). Pick one a day; reply substantively.
 5. Then click follow.
 
-That's the sequence Twitter's algo reads as "real human discovers account organically." Mass-follow without engagement is exactly what they suppress.
+That's the sequence Twitter's algo reads as "real human discovers account." Mass-follow without engagement is what new accounts get suppressed for.
+
+For the journalists in particular: **never DM cold for coverage in week one.** Follow, engage 3–5 times across a fortnight, *then* DM a clean one-liner. They get pitched 50× a day; only the warm intros land.
