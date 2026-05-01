@@ -62,14 +62,10 @@ export function useConcernRecord() {
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
-    // 45s baseline poll interval — slower than the 20s we had, but the
-    // edge cache holds for 60s anyway so polling faster doesn't surface
-    // newer data, just costs everyone bandwidth. Drops total request
-    // volume to /api/concerns by ~55% under load.
-    let backoff = 45_000;
+    let backoff = 20_000;
     let pollCount = 0;
     const MAX_BACKOFF = 5 * 60 * 1000;
-    const FULL_REFRESH_EVERY = 4; // every 4th poll = ~3min full refresh
+    const FULL_REFRESH_EVERY = 5; // every 5th poll = ~100s full refresh
     const sinceConcerns = { current: 0 };
     const sinceSolutions = { current: 0 };
 
@@ -161,7 +157,7 @@ export function useConcernRecord() {
     async function loop() {
       try {
         await pollOnce();
-        backoff = 45_000; // recovered — reset to baseline cadence
+        backoff = 20_000; // recovered — reset to baseline cadence
       } catch {
         backoff = Math.min(backoff * 2, MAX_BACKOFF);
       } finally {
