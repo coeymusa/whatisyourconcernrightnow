@@ -35,11 +35,18 @@ function key(): string | null {
   return process.env[SERVICE_KEY] ?? process.env[ANON_KEY] ?? null;
 }
 
-export async function fetchRecent(limit = 200): Promise<Row[]> {
+export async function fetchRecent(
+  limit = 200,
+  sinceMs = 0,
+): Promise<Row[]> {
   const base = process.env[URL_KEY];
   const k = key();
   if (!base || !k) return [];
-  const url = `${base}/rest/v1/concerns_public?select=*&order=created_at.desc&limit=${limit}`;
+  let url = `${base}/rest/v1/concerns_public?select=*&order=created_at.desc&limit=${limit}`;
+  if (sinceMs > 0) {
+    // ISO 8601 with milliseconds — PostgREST tolerates URL-encoded forms
+    url += `&created_at=gt.${encodeURIComponent(new Date(sinceMs).toISOString())}`;
+  }
   const r = await fetch(url, { headers: headers(k), cache: "no-store" });
   if (!r.ok) return [];
   return (await r.json()) as Row[];
@@ -158,11 +165,17 @@ export async function recentVotesByIp(ipHash: string): Promise<number> {
   return typeof v === "number" ? v : 0;
 }
 
-export async function fetchSolutions(limit = 200): Promise<SolRow[]> {
+export async function fetchSolutions(
+  limit = 200,
+  sinceMs = 0,
+): Promise<SolRow[]> {
   const base = process.env[URL_KEY];
   const k = key();
   if (!base || !k) return [];
-  const url = `${base}/rest/v1/solutions_public?select=*&order=created_at.desc&limit=${limit}`;
+  let url = `${base}/rest/v1/solutions_public?select=*&order=created_at.desc&limit=${limit}`;
+  if (sinceMs > 0) {
+    url += `&created_at=gt.${encodeURIComponent(new Date(sinceMs).toISOString())}`;
+  }
   const r = await fetch(url, { headers: headers(k), cache: "no-store" });
   if (!r.ok) return [];
   return (await r.json()) as SolRow[];

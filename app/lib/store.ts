@@ -45,10 +45,20 @@ export function useConcernRecord() {
     if (storedSolutions.length > 0) setSolutions((s) => [...s, ...storedSolutions]);
   }, []);
 
-  // poll the API every 20s so submissions from other people show up live.
-  // an initial fetch on mount catches anything posted while the page was loading.
+  // Live polling — efficient version.
+  //   • Tracks the latest seen ts per stream and sends ?since=<ts>, so
+  //     after the initial load we usually get back an empty array.
+  //   • Pauses while the tab is hidden so backgrounded tabs cost nothing.
+  //   • Exponential backoff on errors (20s → 40 → 80 → … capped at 5min).
+  //   • Server response is edge-cached for 10s, so all clients in a region
+  //     hit Supabase at most ~once per 10s window between them.
   useEffect(() => {
     let cancelled = false;
+    let timer: number | undefined;
+    let backoff = 20_000;
+    const MAX_BACKOFF = 5 * 60 * 1000;
+    const sinceConcerns = { current: 0 };
+    const sinceSolutions = { current: 0 };
 
     function mergeBy<T extends { id: string }>(prev: T[], incoming: T[]): T[] {
       if (incoming.length === 0) return prev;
@@ -58,31 +68,71 @@ export function useConcernRecord() {
       return [...prev, ...fresh];
     }
 
-    async function poll() {
-      try {
-        const [cRes, sRes] = await Promise.all([
-          fetch("/api/concerns"),
-          fetch("/api/solutions"),
-        ]);
-        if (cancelled) return;
-        const cData = (await cRes.json()) as { concerns?: Concern[] };
-        const sData = (await sRes.json()) as { solutions?: Solution[] };
-        if (cData.concerns?.length) {
-          setConcerns((prev) => mergeBy(prev, cData.concerns!));
-        }
-        if (sData.solutions?.length) {
-          setSolutions((prev) => mergeBy(prev, sData.solutions!));
-        }
-      } catch {
-        /* network blip — try again next tick */
+    async function pollOnce() {
+      if (cancelled) return;
+      // skip while the tab is hidden — saves bandwidth + Supabase reads
+      if (typeof document !== "undefined" && document.hidden) return;
+
+      const cUrl = sinceConcerns.current
+        ? `/api/concerns?since=${sinceConcerns.current}`
+        : "/api/concerns";
+      const sUrl = sinceSolutions.current
+        ? `/api/solutions?since=${sinceSolutions.current}`
+        : "/api/solutions";
+
+      const [cRes, sRes] = await Promise.all([fetch(cUrl), fetch(sUrl)]);
+      if (cancelled) return;
+
+      const cData = (await cRes.json()) as { concerns?: Concern[] };
+      const sData = (await sRes.json()) as { solutions?: Solution[] };
+
+      if (cData.concerns?.length) {
+        setConcerns((prev) => mergeBy(prev, cData.concerns!));
+        sinceConcerns.current = Math.max(
+          sinceConcerns.current,
+          ...cData.concerns.map((c) => c.ts),
+        );
+      }
+      if (sData.solutions?.length) {
+        setSolutions((prev) => mergeBy(prev, sData.solutions!));
+        sinceSolutions.current = Math.max(
+          sinceSolutions.current,
+          ...sData.solutions.map((s) => s.ts),
+        );
       }
     }
 
-    poll();
-    const id = window.setInterval(poll, 20000);
+    function schedule(delay: number) {
+      if (cancelled) return;
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(loop, delay);
+    }
+
+    async function loop() {
+      try {
+        await pollOnce();
+        backoff = 20_000; // recovered — reset
+      } catch {
+        backoff = Math.min(backoff * 2, MAX_BACKOFF);
+      } finally {
+        schedule(backoff);
+      }
+    }
+
+    function onVisibility() {
+      if (!document.hidden) loop(); // poll immediately when user returns
+    }
+
+    loop();
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibility);
+    }
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      if (timer) window.clearTimeout(timer);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
     };
   }, []);
 

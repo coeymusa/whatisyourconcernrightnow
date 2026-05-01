@@ -21,9 +21,14 @@ function clientIp(req: Request): string {
   return req.headers.get("cf-connecting-ip") ?? "0.0.0.0";
 }
 
-export async function GET() {
+const PUBLIC_CACHE = {
+  "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30",
+};
+
+export async function GET(req: Request) {
+  const since = Number(new URL(req.url).searchParams.get("since") ?? "0");
   if (hasSupabase()) {
-    const rows = await fetchSolutions(200);
+    const rows = await fetchSolutions(200, Number.isFinite(since) ? since : 0);
     const items: Solution[] = rows.map((r) => ({
       id: r.id,
       concernId: r.concern_id,
@@ -36,12 +41,12 @@ export async function GET() {
         ? { original: { lang: r.original_lang, text: r.original_text } }
         : {}),
     }));
-    return NextResponse.json({ total: items.length, solutions: items });
+    return NextResponse.json({ total: items.length, solutions: items }, { headers: PUBLIC_CACHE });
   }
-  return NextResponse.json({
-    total: STORE.length,
-    solutions: STORE.slice(-200),
-  });
+  const slice = since > 0
+    ? STORE.filter((s) => s.ts > since)
+    : STORE.slice(-200);
+  return NextResponse.json({ total: slice.length, solutions: slice }, { headers: PUBLIC_CACHE });
 }
 
 export async function POST(req: Request) {

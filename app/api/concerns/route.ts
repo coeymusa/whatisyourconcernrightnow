@@ -22,9 +22,18 @@ function clientIp(req: Request): string {
   return req.headers.get("cf-connecting-ip") ?? "0.0.0.0";
 }
 
-export async function GET() {
+// Edge-cache the GET so a flood of polling clients hits Supabase ~once per
+// 10s per region instead of N times. stale-while-revalidate keeps the
+// response warm for another 30s while the next read refreshes in the
+// background. (304-style behaviour without ETag math.)
+const PUBLIC_CACHE = {
+  "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30",
+};
+
+export async function GET(req: Request) {
+  const since = Number(new URL(req.url).searchParams.get("since") ?? "0");
   if (hasSupabase()) {
-    const rows = await fetchRecent(200);
+    const rows = await fetchRecent(200, Number.isFinite(since) ? since : 0);
     const concerns: Concern[] = rows.map((r) => ({
       id: r.id,
       age: r.age,
@@ -40,12 +49,14 @@ export async function GET() {
         ? { original: { lang: r.original_lang, text: r.original_text } }
         : {}),
     }));
-    return NextResponse.json({ total: concerns.length, concerns });
+    return NextResponse.json({ total: concerns.length, concerns }, { headers: PUBLIC_CACHE });
   }
-  return NextResponse.json({
-    total: STORE.length,
-    concerns: STORE.slice(-200),
-  });
+  // local-dev / fallback path — also cached briefly so Vercel preview
+  // doesn't hammer the in-memory fallback.
+  const slice = since > 0
+    ? STORE.filter((c) => c.ts > since)
+    : STORE.slice(-200);
+  return NextResponse.json({ total: slice.length, concerns: slice }, { headers: PUBLIC_CACHE });
 }
 
 export async function POST(req: Request) {
