@@ -35,6 +35,11 @@ export default function SiteFooter() {
                 methodology
               </Link>
             </li>
+            <li>
+              <Link href="/press" className="hover:text-bone">
+                press kit
+              </Link>
+            </li>
           </ul>
         </div>
 
