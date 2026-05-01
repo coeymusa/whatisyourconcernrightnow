@@ -1,7 +1,10 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const size = { width: 32, height: 32 };
+// Google's favicon guidelines require a multiple of 48px
+// (48×48, 96×96, 144×144...). 32×32 gets dropped in search results
+// and replaced with the generic globe.
+export const size = { width: 96, height: 96 };
 export const contentType = "image/png";
 
 // A faint planet outline holding a single bright concern-dot.
@@ -24,10 +27,10 @@ export default function Icon() {
         <div
           style={{
             position: "absolute",
-            width: 26,
-            height: 26,
+            width: 78,
+            height: 78,
             borderRadius: 9999,
-            border: "1px solid rgba(250,246,237,0.32)",
+            border: "3px solid rgba(250,246,237,0.32)",
             background: "rgba(255,255,255,0.04)",
           }}
         />
@@ -35,10 +38,10 @@ export default function Icon() {
         <div
           style={{
             position: "absolute",
-            top: 8,
-            left: 17,
-            width: 9,
-            height: 9,
+            top: 24,
+            left: 51,
+            width: 27,
+            height: 27,
             borderRadius: 9999,
             background: "#c7321b",
           }}
