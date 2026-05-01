@@ -38,14 +38,18 @@ function key(): string | null {
 export async function fetchRecent(
   limit = 200,
   sinceMs = 0,
+  beforeMs = 0,
 ): Promise<Row[]> {
   const base = process.env[URL_KEY];
   const k = key();
   if (!base || !k) return [];
-  let url = `${base}/rest/v1/concerns_public?select=*&order=created_at.desc&limit=${limit}`;
+  const safeLimit = Math.max(1, Math.min(limit, 500));
+  let url = `${base}/rest/v1/concerns_public?select=*&order=created_at.desc&limit=${safeLimit}`;
   if (sinceMs > 0) {
-    // ISO 8601 with milliseconds — PostgREST tolerates URL-encoded forms
     url += `&created_at=gt.${encodeURIComponent(new Date(sinceMs).toISOString())}`;
+  }
+  if (beforeMs > 0) {
+    url += `&created_at=lt.${encodeURIComponent(new Date(beforeMs).toISOString())}`;
   }
   const r = await fetch(url, { headers: headers(k), cache: "no-store" });
   if (!r.ok) return [];
@@ -168,13 +172,18 @@ export async function recentVotesByIp(ipHash: string): Promise<number> {
 export async function fetchSolutions(
   limit = 200,
   sinceMs = 0,
+  beforeMs = 0,
 ): Promise<SolRow[]> {
   const base = process.env[URL_KEY];
   const k = key();
   if (!base || !k) return [];
-  let url = `${base}/rest/v1/solutions_public?select=*&order=created_at.desc&limit=${limit}`;
+  const safeLimit = Math.max(1, Math.min(limit, 500));
+  let url = `${base}/rest/v1/solutions_public?select=*&order=created_at.desc&limit=${safeLimit}`;
   if (sinceMs > 0) {
     url += `&created_at=gt.${encodeURIComponent(new Date(sinceMs).toISOString())}`;
+  }
+  if (beforeMs > 0) {
+    url += `&created_at=lt.${encodeURIComponent(new Date(beforeMs).toISOString())}`;
   }
   const r = await fetch(url, { headers: headers(k), cache: "no-store" });
   if (!r.ok) return [];

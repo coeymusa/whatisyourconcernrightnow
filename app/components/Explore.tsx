@@ -41,6 +41,7 @@ type Props = {
   concerns: Concern[];
   solutions: Solution[];
   onOpen: (c: Concern) => void;
+  loadOlder?: (pageSize?: number) => Promise<number>;
 };
 
 function relTime(ts: number): string {
@@ -55,7 +56,9 @@ function relTime(ts: number): string {
 const VISIBLE_INITIAL = 18;
 const VISIBLE_STEP = 18;
 
-export default function Explore({ concerns, solutions, onOpen }: Props) {
+export default function Explore({ concerns, solutions, onOpen, loadOlder }: Props) {
+  const [exhausted, setExhausted] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [cat, setCat] = useState<ConcernCategory | "all">("all");
   const [age, setAge] = useState<AgeBracket | "all">("all");
   const [country, setCountry] = useState<string>("all");
@@ -165,7 +168,27 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
   }, [concerns, cat, age, country, query, sort, responseCount]);
 
   const showing = filtered.slice(0, visible);
-  const canLoadMore = visible < filtered.length;
+  // can load more if there's still local cache to reveal, or there's a server
+  // pagination function and we haven't exhausted it yet
+  const canRevealLocal = visible < filtered.length;
+  const canFetchOlder = !!loadOlder && !exhausted;
+  const canLoadMore = canRevealLocal || canFetchOlder;
+
+  async function handleLoadMore() {
+    if (canRevealLocal) {
+      setVisible((v) => v + VISIBLE_STEP);
+      return;
+    }
+    if (!loadOlder || exhausted || loadingOlder) return;
+    setLoadingOlder(true);
+    const added = await loadOlder(VISIBLE_STEP);
+    setLoadingOlder(false);
+    if (added === 0) {
+      setExhausted(true);
+    } else {
+      setVisible((v) => v + added);
+    }
+  }
 
   return (
     <section
@@ -367,10 +390,15 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
         {canLoadMore && (
           <div className="mt-12 flex justify-center">
             <button
-              onClick={() => setVisible((v) => v + VISIBLE_STEP)}
-              className="border border-ink/25 bg-paper px-8 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-ink transition hover:border-ink hover:bg-ink hover:text-paper"
+              onClick={handleLoadMore}
+              disabled={loadingOlder}
+              className="border border-ink/25 bg-paper px-8 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-ink transition hover:border-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-40"
             >
-              load {Math.min(VISIBLE_STEP, filtered.length - visible)} more
+              {loadingOlder
+                ? "fetching older…"
+                : canRevealLocal
+                  ? `load ${Math.min(VISIBLE_STEP, filtered.length - visible)} more`
+                  : "load older entries"}
             </button>
           </div>
         )}

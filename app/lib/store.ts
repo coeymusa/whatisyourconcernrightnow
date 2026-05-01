@@ -191,7 +191,37 @@ export function useConcernRecord() {
     [],
   );
 
-  return { concerns, solutions, submit, submitSolution };
+  // Pagination — fetch concerns older than the oldest one currently shown.
+  // Returns the count of newly added rows so the caller knows whether more
+  // pages are available.
+  const loadOlder = useCallback(
+    async (pageSize = 30): Promise<number> => {
+      // pick the oldest ts we already have in state
+      let oldest = Infinity;
+      for (const c of concerns) {
+        if (c.ts < oldest) oldest = c.ts;
+      }
+      const before = Number.isFinite(oldest) ? oldest : Date.now();
+      try {
+        const r = await fetch(
+          `/api/concerns?before=${before}&limit=${pageSize}`,
+        );
+        if (!r.ok) return 0;
+        const data = (await r.json()) as { concerns?: Concern[] };
+        if (!data.concerns?.length) return 0;
+        const seen = new Set(concerns.map((c) => c.id));
+        const fresh = data.concerns.filter((c) => !seen.has(c.id));
+        if (fresh.length === 0) return 0;
+        setConcerns((prev) => [...prev, ...fresh]);
+        return fresh.length;
+      } catch {
+        return 0;
+      }
+    },
+    [concerns],
+  );
+
+  return { concerns, solutions, submit, submitSolution, loadOlder };
 }
 
 // classify a free-text concern into a category by keyword sniffing.

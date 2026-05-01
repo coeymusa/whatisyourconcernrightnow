@@ -26,9 +26,16 @@ const PUBLIC_CACHE = {
 };
 
 export async function GET(req: Request) {
-  const since = Number(new URL(req.url).searchParams.get("since") ?? "0");
+  const params = new URL(req.url).searchParams;
+  const since = Number(params.get("since") ?? "0");
+  const before = Number(params.get("before") ?? "0");
+  const limit = Number(params.get("limit") ?? "200");
   if (hasSupabase()) {
-    const rows = await fetchSolutions(200, Number.isFinite(since) ? since : 0);
+    const rows = await fetchSolutions(
+      Number.isFinite(limit) ? limit : 200,
+      Number.isFinite(since) ? since : 0,
+      Number.isFinite(before) ? before : 0,
+    );
     const items: Solution[] = rows.map((r) => ({
       id: r.id,
       concernId: r.concern_id,
