@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { CATEGORY_LABELS, CATEGORY_ORDER, type ConcernCategory } from "../../lib/types";
 
-export const runtime = "edge";
+// Runs on Node.js — Edge runtime conflicts with generateStaticParams.
 export const alt = "what is your concern? — topic dossier";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
