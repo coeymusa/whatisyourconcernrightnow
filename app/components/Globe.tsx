@@ -525,7 +525,9 @@ export default function Globe({
           </button>
           <button
             onClick={() => openPost()}
-            className="bg-blood px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-bone transition hover:bg-bone hover:text-blood sm:px-4 sm:py-2"
+            // hidden on mobile — there's a smaller top-center pair below the
+            // top bar that covers post + explore on small viewports
+            className="hidden bg-blood px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-bone transition hover:bg-bone hover:text-blood sm:inline-flex"
           >
             + post yours
           </button>
@@ -846,14 +848,24 @@ export default function Globe({
           </button>
         </div>
 
-        {/* bottom action pair — post + scroll-to-explore.
-            On mobile: stacked, larger tap targets, safe-area padding so iOS
-            home indicator doesn't sit on top of the buttons. On desktop:
-            inline pair as before. */}
-        <div className="pointer-events-auto safe-bottom absolute inset-x-4 bottom-0 z-20 flex flex-col items-stretch gap-2 sm:left-1/2 sm:right-auto sm:bottom-6 sm:inset-x-auto sm:flex-row sm:-translate-x-1/2 sm:items-center sm:gap-2 sm:p-0">
+        {/* Action pair — post + scroll-to-explore.
+            On mobile: small pills near the top of the globe section, just
+            under the top bar (avoids Chrome's bottom URL bar covering them).
+            On desktop: bottom-center as before. */}
+        <div
+          className="
+            pointer-events-auto absolute left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5
+            top-[3.75rem]
+            sm:top-auto sm:bottom-6 sm:gap-2
+          "
+        >
           <button
             onClick={() => openPost()}
-            className="inline-flex items-center justify-center gap-2 bg-blood px-5 py-3.5 font-mono text-[11px] uppercase tracking-[0.28em] text-bone transition hover:bg-bone hover:text-blood sm:px-4 sm:py-2.5 sm:text-[10px]"
+            className="
+              inline-flex items-center justify-center gap-1.5 bg-blood text-bone transition hover:bg-bone hover:text-blood
+              px-3 py-1.5 text-[9px] tracking-[0.22em] font-mono uppercase
+              sm:px-4 sm:py-2.5 sm:text-[10px] sm:tracking-[0.28em] sm:gap-2
+            "
           >
             <span>+ post yours</span>
           </button>
@@ -865,10 +877,15 @@ export default function Globe({
                   ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }
             }}
-            className="inline-flex items-center justify-center gap-2 border border-bone/25 bg-ink/80 px-5 py-3.5 font-mono text-[11px] uppercase tracking-[0.28em] text-bone backdrop-blur transition hover:border-blood hover:text-blood sm:bg-ink/70 sm:px-4 sm:py-2.5 sm:text-[10px] sm:text-bone/80"
+            className="
+              inline-flex items-center justify-center gap-1.5 border border-bone/25 bg-ink/80 backdrop-blur transition hover:border-blood hover:text-blood text-bone
+              px-3 py-1.5 text-[9px] tracking-[0.22em] font-mono uppercase
+              sm:px-4 sm:py-2.5 sm:text-[10px] sm:tracking-[0.28em] sm:gap-2 sm:bg-ink/70 sm:text-bone/80
+            "
             aria-label="scroll to explore"
           >
-            <span>explore the record</span>
+            <span className="hidden sm:inline">explore the record</span>
+            <span className="sm:hidden">explore</span>
             <span className="float-down text-blood">↓</span>
           </button>
         </div>
