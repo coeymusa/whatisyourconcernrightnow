@@ -27,6 +27,7 @@ export default async function TopicOG({ params }: Props) {
   const label = CATEGORY_LABELS[category];
   const list = CATEGORY_ORDER.filter((c) => c !== "other");
   const fileNo = String(list.indexOf(category) + 1).padStart(2, "0");
+  const fontSize = label.length > 22 ? 92 : label.length > 16 ? 108 : 128;
 
   return new ImageResponse(
     (
@@ -68,7 +69,9 @@ export default async function TopicOG({ params }: Props) {
             />
             <span>live · the record</span>
           </div>
-          <div>vol. I · topic {fileNo} · {category}</div>
+          <div style={{ display: "flex" }}>
+            {`vol. I · topic ${fileNo} · ${category}`}
+          </div>
         </div>
 
         <div
@@ -82,7 +85,7 @@ export default async function TopicOG({ params }: Props) {
             display: "flex",
           }}
         >
-          § topic {fileNo} — {category}
+          {`§ topic ${fileNo} — ${category}`}
         </div>
 
         <div
@@ -91,18 +94,17 @@ export default async function TopicOG({ params }: Props) {
             flexDirection: "column",
             marginTop: 28,
             fontStyle: "italic",
-            fontSize:
-              label.length > 22 ? 92 : label.length > 16 ? 108 : 128,
+            fontSize,
             lineHeight: 1,
             letterSpacing: -1,
           }}
         >
-          <span style={{ display: "flex" }}>What the world</span>
-          <span style={{ display: "flex" }}>is saying about</span>
-          <span style={{ display: "flex", color: "#c7321b" }}>
-            <span style={{ display: "flex" }}>{label.toLowerCase()}</span>
+          <div style={{ display: "flex" }}>What the world</div>
+          <div style={{ display: "flex" }}>is saying about</div>
+          <div style={{ display: "flex" }}>
+            <span style={{ color: "#c7321b" }}>{label.toLowerCase()}</span>
             <span style={{ color: "#0a0908" }}>.</span>
-          </span>
+          </div>
         </div>
 
         <div

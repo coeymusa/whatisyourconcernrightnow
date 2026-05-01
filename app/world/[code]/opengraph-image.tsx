@@ -6,8 +6,6 @@ export const alt = "what is your concern? — country dossier";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Pre-render OG cards for the same top-traffic countries that have static
-// page params. The rest generate on demand.
 export function generateStaticParams() {
   return [
     "US", "GB", "CA", "AU", "IN", "BR", "JP", "DE", "FR", "MX",
@@ -28,6 +26,8 @@ export default async function CountryOG({ params }: Props) {
   const fileNo = String(
     COUNTRIES.findIndex((c) => c.code === country.code) + 1,
   ).padStart(3, "0");
+  const fontSize =
+    country.name.length > 18 ? 96 : country.name.length > 12 ? 116 : 140;
 
   return new ImageResponse(
     (
@@ -44,7 +44,6 @@ export default async function CountryOG({ params }: Props) {
           position: "relative",
         }}
       >
-        {/* top bar */}
         <div
           style={{
             display: "flex",
@@ -70,10 +69,11 @@ export default async function CountryOG({ params }: Props) {
             />
             <span>live · the record</span>
           </div>
-          <div>vol. I · dossier {fileNo} · {country.code}</div>
+          <div style={{ display: "flex" }}>
+            {`vol. I · dossier ${fileNo} · ${country.code}`}
+          </div>
         </div>
 
-        {/* section mark */}
         <div
           style={{
             marginTop: 56,
@@ -85,37 +85,30 @@ export default async function CountryOG({ params }: Props) {
             display: "flex",
           }}
         >
-          § dossier {fileNo} — {country.name.toLowerCase()}
+          {`§ dossier ${fileNo} — ${country.name.toLowerCase()}`}
         </div>
 
-        {/* headline */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             marginTop: 18,
             fontStyle: "italic",
-            fontSize:
-              country.name.length > 18
-                ? 96
-                : country.name.length > 12
-                  ? 116
-                  : 140,
+            fontSize,
             lineHeight: 0.95,
             letterSpacing: -1,
           }}
         >
-          <span style={{ display: "flex" }}>What is</span>
-          <span style={{ display: "flex", fontStyle: "normal" }}>
+          <div style={{ display: "flex" }}>What is</div>
+          <div style={{ display: "flex", fontStyle: "normal" }}>
             {country.name}
-          </span>
-          <span style={{ display: "flex" }}>
+          </div>
+          <div style={{ display: "flex" }}>
             <span style={{ color: "#c7321b" }}>concerned about</span>
             <span style={{ color: "#0a0908" }}>?</span>
-          </span>
+          </div>
         </div>
 
-        {/* footer */}
         <div
           style={{
             position: "absolute",
