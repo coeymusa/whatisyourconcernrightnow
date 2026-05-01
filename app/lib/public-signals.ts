@@ -83,12 +83,16 @@ export async function getCountrySignals(
 
   const sub = COUNTRY_SUBREDDIT[countryCode];
 
-  const [gdelt, reddit] = await Promise.all([
-    fetchGdelt(gdeltCountryQuery(country.name), 12),
+  // Three parallel sources — gives every country 2–3 shots at content even
+  // if one source is empty or rate-limited from Vercel's IP pool. HN search
+  // is the bullet-proof fallback (Algolia is the most reliable of the three).
+  const [gdelt, reddit, hn] = await Promise.all([
+    fetchGdelt(gdeltCountryQuery(country.name), 10),
     sub ? fetchRedditHot(sub, 8) : Promise.resolve([]),
+    fetchHN(country.name, 4),
   ]);
 
-  return dedupe(interleave(reddit, gdelt)).slice(0, limit);
+  return dedupe(interleave(reddit, gdelt, hn)).slice(0, limit);
 }
 
 export async function getTopicSignals(
