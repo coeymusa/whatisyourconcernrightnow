@@ -56,6 +56,49 @@ export async function fetchRecent(
   return (await r.json()) as Row[];
 }
 
+// Country-filtered read used by /world/[code] server-rendered pages.
+export async function fetchByCountry(
+  countryCode: string,
+  limit = 60,
+): Promise<Row[]> {
+  const base = process.env[URL_KEY];
+  const k = key();
+  if (!base || !k) return [];
+  const safeLimit = Math.max(1, Math.min(limit, 200));
+  const url =
+    `${base}/rest/v1/concerns_public?select=*` +
+    `&country_code=eq.${encodeURIComponent(countryCode.toUpperCase())}` +
+    `&order=created_at.desc&limit=${safeLimit}`;
+  const r = await fetch(url, {
+    headers: headers(k),
+    // 5-min revalidation — country pages don't need second-level freshness
+    next: { revalidate: 300, tags: [`country:${countryCode.toUpperCase()}`] },
+  });
+  if (!r.ok) return [];
+  return (await r.json()) as Row[];
+}
+
+// Topic-filtered read used by /topics/[category] server-rendered pages.
+export async function fetchByCategory(
+  category: string,
+  limit = 60,
+): Promise<Row[]> {
+  const base = process.env[URL_KEY];
+  const k = key();
+  if (!base || !k) return [];
+  const safeLimit = Math.max(1, Math.min(limit, 200));
+  const url =
+    `${base}/rest/v1/concerns_public?select=*` +
+    `&category=eq.${encodeURIComponent(category)}` +
+    `&order=created_at.desc&limit=${safeLimit}`;
+  const r = await fetch(url, {
+    headers: headers(k),
+    next: { revalidate: 300, tags: [`topic:${category}`] },
+  });
+  if (!r.ok) return [];
+  return (await r.json()) as Row[];
+}
+
 export async function insertConcern(input: {
   age: number;
   bracket: string;

@@ -669,7 +669,8 @@ export default function Globe({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onPointerLeave={onPointerUp}
-          aria-label="3D globe of concerns"
+          aria-label="Interactive 3D globe showing anonymous concerns posted by people around the world. Drag to rotate, scroll or pinch to zoom, click a country for its dossier."
+          role="application"
         >
           <defs>
             <radialGradient id="oceanG" cx="35%" cy="32%" r="68%">
