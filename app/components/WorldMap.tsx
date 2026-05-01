@@ -246,7 +246,7 @@ export default function WorldMap({ concerns, onOpen }: Props) {
       {/* density rail */}
       <div className="mt-10 px-5 sm:px-10 lg:px-16">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-bone/55">
-          loudest right now
+          loudest
         </div>
         <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-bone/85">
           {[...counts.entries()]

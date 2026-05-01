@@ -3,19 +3,19 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://whatisyourconcern.com"),
-  title: "what is your concern, right now?",
+  title: "what is your concern?",
   description:
-    "An anonymous global record of what humanity is afraid of, right now. Add your voice. The world is listening.",
+    "An anonymous global record of what humanity is afraid of. Add your voice. The world is listening.",
   openGraph: {
-    title: "what is your concern, right now?",
+    title: "what is your concern?",
     description:
-      "An anonymous global record of what humanity is afraid of, right now.",
+      "An anonymous global record of what humanity is afraid of.",
     type: "website",
     url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: "what is your concern, right now?",
+    title: "what is your concern?",
     description: "an anonymous global record. add your voice.",
   },
 };

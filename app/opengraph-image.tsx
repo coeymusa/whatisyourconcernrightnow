@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "what is your concern, right now?";
+export const alt = "what is your concern?";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -62,9 +62,8 @@ export default async function OG() {
         >
           <span>what is your</span>
           <span>
-            concern,{" "}
             <span style={{ color: "#c7321b", fontStyle: "italic" }}>
-              right now
+              concern
             </span>
             ?
           </span>

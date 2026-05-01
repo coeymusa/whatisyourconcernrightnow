@@ -153,7 +153,7 @@ export default function SubmissionForm({ onSubmit, serial }: Props) {
                   htmlFor="concern"
                   className="mb-3 block font-mono text-[11px] uppercase tracking-[0.25em] text-ink/70"
                 >
-                  my biggest concern, right now —
+                  my biggest concern —
                 </label>
                 <textarea
                   id="concern"
@@ -277,7 +277,7 @@ function Receipt({
               if (typeof navigator !== "undefined" && navigator.share) {
                 navigator
                   .share({
-                    title: "what is your concern, right now?",
+                    title: "what is your concern?",
                     text: "I added my voice to the global record. add yours.",
                     url,
                   })

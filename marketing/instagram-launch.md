@@ -9,8 +9,8 @@ Tone: quiet, raw, literary. Match the site. Avoid marketer-speak.
 **Slide 1 — title card** (ink background, blood-red accent)
 
 ```
-what is your concern,
-right now?
+what is your
+concern?
 ```
 
 **Slides 2–7 — six voices** (white serif italic on ink, one per slide)
@@ -76,7 +76,7 @@ Image: screenshot of the globe at a striking angle, with a couple of bubbles pop
 
 **On-screen text (sequenced):**
 
-- 0–2s: "what is your concern, right now?"
+- 0–2s: "what is your concern?"
 - 3–6s: "anonymous · global · permanent"
 - 7–10s: (show post → ping)
 - 11–12s: "whatisyourconcern.com"
@@ -94,7 +94,7 @@ Image: screenshot of the globe at a striking angle, with a couple of bubbles pop
 
 1. Plain text on ink: *"a quiet room. no accounts. no names."* — link sticker.
 2. Screenshot of three real concerns from different countries — link sticker.
-3. Question sticker: *"what is your concern, right now?"* — let people answer in stories.
+3. Question sticker: *"what is your concern?"* — let people answer in stories.
 4. Repost a couple of the answers (anonymized) with *"there's a place for this →"* + link.
 5. Globe screenshot, caption *"30 countries so far"* + link.
 

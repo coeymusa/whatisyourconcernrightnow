@@ -4,9 +4,9 @@
 
 **Title** (pick one — A is the safest IIB-friendly framing):
 
-**A.** what is your concern, right now? — an anonymous global record of what people fear, on a draggable 3D globe
+**A.** what is your concern? — an anonymous global record of what people fear, on a draggable 3D globe
 
-**B.** Drag a globe to read what people around the world are anonymously afraid of right now
+**B.** Drag a globe to read what people around the world are anonymously afraid of
 
 **C.** I built a quiet room where anyone, anywhere, can post what scares them about the future — mapped on a 3D globe
 
@@ -48,7 +48,7 @@
 
 | Subreddit | Subs | Title angle | When |
 | --- | --- | --- | --- |
-| r/SideProject | 600k | "what is your concern, right now? — an anonymous global record I built" | Day 2 |
+| r/SideProject | 600k | "what is your concern? — an anonymous global record I built" | Day 2 |
 | r/dataisbeautiful | 21M | "[OC] What 30 people from 30 countries are most afraid of, on an interactive globe" | Day 4 (mark [OC]) |
 | r/webdev | 3M | "Hand-rolled an orthographic globe in pure SVG (no three.js) — drag, zoom, atmospheric glow, ~12kb" | Day 5–6 |
 | r/programming | 7M | "Built a globe with d3-geo + Next.js — open source" | Day 7 |

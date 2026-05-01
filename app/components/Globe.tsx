@@ -469,7 +469,7 @@ export default function Globe({
         </div>
 
         <h1 className="font-serif text-base italic text-bone sm:text-lg">
-          what is your <span className="text-blood">concern</span>, right now?
+          what is your <span className="text-blood">concern</span>?
         </h1>
 
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/70 sm:gap-4">
@@ -497,7 +497,7 @@ export default function Globe({
               const url = "https://whatisyourconcern.com";
               if (typeof navigator !== "undefined" && navigator.share) {
                 navigator
-                  .share({ title: "what is your concern, right now?", url })
+                  .share({ title: "what is your concern?", url })
                   .catch(() => {});
               } else if (typeof navigator !== "undefined" && navigator.clipboard) {
                 navigator.clipboard.writeText(url).catch(() => {});

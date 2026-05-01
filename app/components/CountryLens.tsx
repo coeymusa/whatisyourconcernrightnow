@@ -162,8 +162,7 @@ export default function CountryLens({
                   § dossier · {selectedCountry}
                 </div>
                 <h2 className="mt-3 font-serif text-5xl italic leading-[0.95] sm:text-6xl">
-                  {country.name.toLowerCase()},<br />
-                  <span className="text-blood not-italic"> right now.</span>
+                  {country.name.toLowerCase()}<span className="text-blood not-italic">.</span>
                 </h2>
                 {onPostForCountry && (
                   <button

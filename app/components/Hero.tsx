@@ -63,8 +63,8 @@ export default function Hero({ total, countries, latest, responses }: Props) {
           className="font-serif text-[clamp(3.2rem,11vw,11rem)] italic leading-[0.92] tracking-[-0.01em]"
         >
           what is your<br />
-          <span className="not-italic">concern,</span>
-          <span className="italic"> right now</span>
+          <span className="not-italic">concern</span>
+          <span className="italic">?</span>
           <span className="cursor-blink not-italic" aria-hidden />
         </motion.h1>
 
@@ -129,7 +129,7 @@ const MARQUEE = [
   "one person · one voice · one entry",
   "no names · no accounts",
   "the world is listening",
-  "what is your concern, right now",
+  "what is your concern",
   "a global confession",
   "share what you fear",
   "you are not alone",
