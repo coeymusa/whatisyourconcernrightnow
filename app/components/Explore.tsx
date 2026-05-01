@@ -254,29 +254,29 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
                 >
                   <button
                     onClick={() => onOpen(c)}
-                    className="group flex h-full w-full flex-col gap-3 border border-ink/10 bg-paper-deep p-5 text-left transition hover:border-ink hover:bg-bone"
+                    className="group flex h-full w-full flex-col gap-3 border border-ink/40 bg-ink p-5 text-left text-bone transition hover:border-blood hover:shadow-[0_18px_40px_-22px_rgba(0,0,0,0.5)]"
                   >
-                    <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                    <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-bone/55">
                       <span className="text-blood">
                         {findCountry(c.countryCode)?.name ?? c.countryCode}
                       </span>
                       <span>age {c.age}</span>
                     </div>
-                    <p className="font-serif text-xl italic leading-snug text-ink sm:text-[1.4rem]">
+                    <p className="font-serif text-xl italic leading-snug text-bone sm:text-[1.4rem]">
                       “{c.text}”
                     </p>
                     {c.original && (
-                      <p className="font-mono text-[10px] italic leading-relaxed text-ink/45">
+                      <p className="font-mono text-[10px] italic leading-relaxed text-bone/50">
                         {c.original.lang}: “{c.original.text}”
                       </p>
                     )}
-                    <div className="mt-auto flex items-center justify-between border-t border-ink/10 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                    <div className="mt-auto flex items-center justify-between border-t border-bone/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/55">
                       <span>{CATEGORY_LABELS[c.category].toLowerCase()}</span>
                       <span className="flex items-center gap-3">
                         <span className="text-amber">
                           {respN} response{respN === 1 ? "" : "s"}
                         </span>
-                        <span className="text-ink/35">
+                        <span className="text-bone/40">
                           {mounted ? relTime(c.ts) : "—"} ago
                         </span>
                       </span>

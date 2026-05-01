@@ -59,8 +59,10 @@ function det(i: number): number {
   return (x >>> 0) / 0xffffffff;
 }
 
-// Anchor seed timestamps to a fixed origin so they don't depend on Date.now().
-const SEED_ORIGIN = 1714521600000;
+// Anchor seed timestamps to a recent fixed point so they read as "Xh / Xd ago"
+// rather than "730d ago". Update this every now and then if the site ages.
+// Currently anchored ~3 days before launch (April 2026).
+const SEED_ORIGIN = 1745798400000;
 
 export const SEED_CONCERNS: Concern[] = RAW.map((r, i) => ({
   ...r,

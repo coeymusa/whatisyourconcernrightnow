@@ -46,6 +46,47 @@ export function useConcernRecord() {
     if (storedSolutions.length > 0) setSolutions((s) => [...s, ...storedSolutions]);
   }, []);
 
+  // poll the API every 20s so submissions from other people show up live.
+  // an initial fetch on mount catches anything posted while the page was loading.
+  useEffect(() => {
+    let cancelled = false;
+
+    function mergeBy<T extends { id: string }>(prev: T[], incoming: T[]): T[] {
+      if (incoming.length === 0) return prev;
+      const seen = new Set(prev.map((x) => x.id));
+      const fresh = incoming.filter((x) => !seen.has(x.id));
+      if (fresh.length === 0) return prev;
+      return [...prev, ...fresh];
+    }
+
+    async function poll() {
+      try {
+        const [cRes, sRes] = await Promise.all([
+          fetch("/api/concerns"),
+          fetch("/api/solutions"),
+        ]);
+        if (cancelled) return;
+        const cData = (await cRes.json()) as { concerns?: Concern[] };
+        const sData = (await sRes.json()) as { solutions?: Solution[] };
+        if (cData.concerns?.length) {
+          setConcerns((prev) => mergeBy(prev, cData.concerns!));
+        }
+        if (sData.solutions?.length) {
+          setSolutions((prev) => mergeBy(prev, sData.solutions!));
+        }
+      } catch {
+        /* network blip — try again next tick */
+      }
+    }
+
+    poll();
+    const id = window.setInterval(poll, 20000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
+
   // ambient stream — adds a "discovered" concern every 5–10s
   useEffect(() => {
     let cancelled = false;
