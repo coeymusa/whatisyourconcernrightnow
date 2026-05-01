@@ -4,7 +4,11 @@ Tone: literary, honest, slightly unsettled. Match the site. No emojis except whe
 
 ## Profile setup
 
-- **Avatar**: hit `https://whatisyourconcern.com/avatar` in a browser → right-click → save image as → upload to Twitter. 1024×1024 PNG, on-brand.
+- **Avatar**: open `marketing/avatar.svg` in a browser, screenshot the tab, crop to a 1024×1024 square. Or convert to PNG with any of:
+  - Online: drop the SVG at https://cloudconvert.com/svg-to-png (set width = 1024)
+  - macOS: `qlmanage -t -s 1024 -o . marketing/avatar.svg && mv avatar.svg.png avatar.png`
+  - ImageMagick: `magick -background none -size 1024x1024 marketing/avatar.svg avatar.png`
+  - VS Code: install "SVG Preview" → right-click the file → "Export PNG"
 - **Display name**: `what is your concern?`
 - **Handle**: whatever you have / can grab. `@whatisyourconcern` if free.
 - **Bio** (160 chars max):
