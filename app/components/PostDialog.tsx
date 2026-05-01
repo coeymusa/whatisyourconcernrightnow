@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import QuickAdd from "./QuickAdd";
 import ShareLinks from "./ShareLinks";
 import type { ConcernCategory } from "../lib/types";
+import { useFocusTrap } from "../lib/use-focus-trap";
 
 type Props = {
   open: boolean;
@@ -31,18 +32,17 @@ export default function PostDialog({
     if (!open) setSubmitted(false);
   }, [open]);
 
+  // body scroll lock; focus trap (with Escape close) is managed below.
   useEffect(() => {
     if (!open) return;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open]);
+
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(dialogRef, open, onClose);
 
   return (
     <AnimatePresence>
@@ -59,6 +59,8 @@ export default function PostDialog({
           />
           <motion.div
             key="dialog"
+            ref={dialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-label={submitted ? "share what you started" : "post your concern"}
@@ -70,7 +72,7 @@ export default function PostDialog({
               fixed left-1/2 top-1/2 z-[70] w-[min(92vw,40rem)]
               -translate-x-1/2 -translate-y-1/2 border border-bone/20
               bg-ink-soft/95 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)]
-              backdrop-blur
+              backdrop-blur outline-none
             "
           >
             <div className="flex items-center justify-between border-b border-bone/15 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-bone/65">

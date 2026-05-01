@@ -21,6 +21,7 @@ import type { Concern, ConcernCategory, Solution } from "../lib/types";
 import { COUNTRIES, findByM49, findCountry } from "../lib/countries";
 import CountryLens from "./CountryLens";
 import DonateLink from "./DonateLink";
+import { useFocusTrap } from "../lib/use-focus-trap";
 import PostDialog from "./PostDialog";
 import ShareLinks from "./ShareLinks";
 
@@ -138,6 +139,9 @@ export default function Globe({
   const [pings, setPings] = useState<{ id: string; x: number; y: number }[]>([]);
   const [postOpen, setPostOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const shareDialogRef = useRef<HTMLDivElement | null>(null);
+  const closeShare = useCallback(() => setShareOpen(false), []);
+  useFocusTrap(shareDialogRef, shareOpen, closeShare);
   const [postInitialCountry, setPostInitialCountry] = useState<string | undefined>(undefined);
 
   const openPost = useCallback((country?: string) => {
@@ -1039,6 +1043,8 @@ export default function Globe({
             />
             <motion.div
               key="share-dialog"
+              ref={shareDialogRef}
+              tabIndex={-1}
               role="dialog"
               aria-modal="true"
               aria-label="share this place"
@@ -1046,7 +1052,7 @@ export default function Globe({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.97 }}
               transition={{ duration: 0.32, ease: [0.2, 0.7, 0.3, 1] }}
-              className="fixed left-1/2 top-1/2 z-[70] w-[min(92vw,40rem)] -translate-x-1/2 -translate-y-1/2 border border-bone/20 bg-ink-soft/95 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)] backdrop-blur"
+              className="fixed left-1/2 top-1/2 z-[70] w-[min(92vw,40rem)] -translate-x-1/2 -translate-y-1/2 border border-bone/20 bg-ink-soft/95 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)] backdrop-blur outline-none"
             >
               <div className="flex items-center justify-between border-b border-bone/15 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-bone/65">
                 <span>share this place</span>

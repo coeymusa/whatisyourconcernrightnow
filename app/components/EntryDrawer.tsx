@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { COUNTRIES, findCountry } from "../lib/countries";
 import { CATEGORY_LABELS, type Concern, type Solution } from "../lib/types";
 import { moderateClient } from "../lib/moderation";
+import { useFocusTrap } from "../lib/use-focus-trap";
 
 const MAX_LENGTH = 280;
 
@@ -43,19 +44,20 @@ export default function EntryDrawer({
     }
   }, [concern?.id]);
 
-  // close on escape + body scroll lock
+  // body scroll lock; focus trap (with Escape close) is managed below.
   useEffect(() => {
     if (!concern) return;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
     };
-  }, [concern, onClose]);
+  }, [concern]);
+
+  // Focus trap + Escape + restore-on-close. Hook reads the ref's
+  // currentValue at mount time; container always exists when concern is
+  // truthy (motion.aside is rendered inside the AnimatePresence branch).
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useFocusTrap(dialogRef, !!concern, onClose);
 
   const matched = useMemo(
     () =>
@@ -109,11 +111,13 @@ export default function EntryDrawer({
           />
           <motion.aside
             key="drawer"
+            ref={dialogRef as React.RefObject<HTMLElement>}
+            tabIndex={-1}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.42, ease: [0.2, 0.7, 0.3, 1] }}
-            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col overflow-y-auto bg-paper text-ink sm:max-w-2xl"
+            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col overflow-y-auto bg-paper text-ink sm:max-w-2xl outline-none"
             role="dialog"
             aria-modal="true"
             aria-label="entry detail"
