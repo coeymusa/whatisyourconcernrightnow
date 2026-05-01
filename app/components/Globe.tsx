@@ -947,74 +947,107 @@ function BubbleCard({
   const W = isMobile ? 220 : 320;
   const viewportW =
     typeof window !== "undefined" ? window.innerWidth : 1200;
-  const left = Math.max(
-    12,
-    Math.min(x - W / 2, viewportW - W - 12),
-  );
+  const left = Math.max(12, Math.min(x - W / 2, viewportW - W - 12));
   const top = Math.max(12, y - 130);
   const accent = flavor === "yours" ? "amber" : "blood";
 
+  // Approximate rendered card height. Varies a few px with content + viewport,
+  // but close enough for the connector to land on the dot. The previous "90"
+  // magic number was the bug — actual card with clamp-3 + meta footer + padding
+  // is ~120-130px.
+  const estimatedCardH = isMobile ? 118 : 132;
+
+  // bubble's bottom-centre — where the connector starts
+  const bubbleAnchorX = left + W / 2;
+  const bubbleAnchorY = top + estimatedCardH;
+
+  // bounding box for the connector SVG, in viewport coords
+  const lineMinX = Math.min(bubbleAnchorX, x) - 2;
+  const lineMinY = Math.min(bubbleAnchorY, y) - 2;
+  const lineMaxX = Math.max(bubbleAnchorX, x) + 2;
+  const lineMaxY = Math.max(bubbleAnchorY, y) + 2;
+  const lineW = lineMaxX - lineMinX;
+  const lineH = lineMaxY - lineMinY;
+  // line endpoints, expressed in the SVG's local coords
+  const x1 = bubbleAnchorX - lineMinX;
+  const y1 = bubbleAnchorY - lineMinY;
+  const x2 = x - lineMinX;
+  const y2 = y - lineMinY;
+  const strokeColor =
+    accent === "amber" ? "rgba(212,162,74,0.7)" : "rgba(199,50,27,0.6)";
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -6, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.96 }}
-      transition={{ duration: 0.55, ease: [0.2, 0.7, 0.3, 1] }}
-      className="bubble-glow pointer-events-auto absolute z-10 border border-bone/15 bg-ink-soft/85 backdrop-blur-sm hover:border-bone/30"
-      style={{ width: W, left, top }}
-    >
-      {/* main tap area — opens drawer */}
-      <button
-        type="button"
-        onClick={onClick}
-        className="block w-full cursor-pointer p-4 pr-9 text-left"
-      >
-        <p className="clamp-3 font-serif text-[15px] italic leading-snug text-bone sm:text-lg">
-          “{concern.text}”
-        </p>
-        <div
-          className={`mt-3 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.25em] ${
-            accent === "amber" ? "text-amber" : "text-bone/55"
-          }`}
-        >
-          <span>
-            {findCountry(concern.countryCode)?.name ?? concern.countryCode} · age{" "}
-            {concern.age}
-          </span>
-          <span className="text-bone/45">tap →</span>
-        </div>
-      </button>
-
-      {/* explicit dismiss — fat tap target on mobile, small ×, top-right corner */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDismiss();
+    <>
+      {/* connector — rendered first so the card sits on top of any overlap */}
+      <motion.svg
+        className="pointer-events-none absolute"
+        style={{
+          left: lineMinX,
+          top: lineMinY,
+          width: lineW,
+          height: lineH,
+          overflow: "visible",
         }}
-        aria-label="dismiss"
-        className="absolute right-1 top-1 grid h-7 w-7 place-items-center text-bone/55 transition hover:text-blood"
-      >
-        <span className="text-base leading-none">×</span>
-      </button>
-
-      <svg
-        className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2"
-        width="2"
-        height={Math.max(0, y - top - 90)}
-        style={{ overflow: "visible" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.55, ease: [0.2, 0.7, 0.3, 1] }}
       >
         <line
-          x1="1"
-          y1="0"
-          x2="1"
-          y2={Math.max(0, y - top - 90)}
-          stroke={accent === "amber" ? "rgba(212,162,74,0.7)" : "rgba(199,50,27,0.6)"}
-          strokeWidth="1"
+          x1={x1}
+          y1={y1}
+          x2={x2}
+          y2={y2}
+          stroke={strokeColor}
+          strokeWidth={1}
           strokeDasharray="2 3"
           className="draw-in"
         />
-      </svg>
-    </motion.div>
+      </motion.svg>
+
+      <motion.div
+        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -10, scale: 0.96 }}
+        transition={{ duration: 0.55, ease: [0.2, 0.7, 0.3, 1] }}
+        className="bubble-glow pointer-events-auto absolute z-10 border border-bone/15 bg-ink-soft/85 backdrop-blur-sm hover:border-bone/30"
+        style={{ width: W, left, top }}
+      >
+        {/* main tap area — opens drawer */}
+        <button
+          type="button"
+          onClick={onClick}
+          className="block w-full cursor-pointer p-4 pr-9 text-left"
+        >
+          <p className="clamp-3 font-serif text-[15px] italic leading-snug text-bone sm:text-lg">
+            “{concern.text}”
+          </p>
+          <div
+            className={`mt-3 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.25em] ${
+              accent === "amber" ? "text-amber" : "text-bone/55"
+            }`}
+          >
+            <span>
+              {findCountry(concern.countryCode)?.name ?? concern.countryCode} · age{" "}
+              {concern.age}
+            </span>
+            <span className="text-bone/45">tap →</span>
+          </div>
+        </button>
+
+        {/* explicit dismiss */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismiss();
+          }}
+          aria-label="dismiss"
+          className="absolute right-1 top-1 grid h-7 w-7 place-items-center text-bone/55 transition hover:text-blood"
+        >
+          <span className="text-base leading-none">×</span>
+        </button>
+      </motion.div>
+    </>
   );
 }
