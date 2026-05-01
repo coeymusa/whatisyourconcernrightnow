@@ -327,12 +327,29 @@ export default function Globe({
     };
   }, [size.w, size.h, projection]);
 
-  // ----- Drag interactions ----------------------------------------------
+  // ----- Pointer interactions: drag (1 finger) + pinch (2 fingers) ------
   const dragRef = useRef<{ x: number; y: number; rot: [number, number] } | null>(null);
+  // active pointers — for pinch detection we need to know about all of them
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  // pinch state — initial pointer distance + the scale at pinch-start
+  const pinchRef = useRef<{ dist: number; scale: number } | null>(null);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (e.button !== 0) return;
+      if (e.button !== 0 && e.pointerType === "mouse") return;
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (pointersRef.current.size === 2) {
+        // second finger landed — flip into pinch mode, abandon the drag
+        const [p1, p2] = Array.from(pointersRef.current.values());
+        const d = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        pinchRef.current = { dist: d || 1, scale: scaleFactor };
+        dragRef.current = null;
+        dragMovedRef.current = true; // suppress accidental click-through
+        return;
+      }
+
+      // single pointer — start drag
       isDraggingRef.current = true;
       dragMovedRef.current = false;
       dragRef.current = {
@@ -340,21 +357,31 @@ export default function Globe({
         y: e.clientY,
         rot: [...rotation] as [number, number],
       };
-      // Intentionally NOT calling setPointerCapture — it routes the
-      // subsequent pointerup to the SVG and can suppress the click event
-      // that should fire on the country path. The drag still works because
-      // the SVG itself is the pointer-event listener.
     },
-    [rotation],
+    [rotation, scaleFactor],
   );
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
+      if (!pointersRef.current.has(e.pointerId)) return;
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // pinch path
+      if (pointersRef.current.size === 2 && pinchRef.current) {
+        const [p1, p2] = Array.from(pointersRef.current.values());
+        const d = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        const ratio = d / pinchRef.current.dist;
+        const next = pinchRef.current.scale * ratio;
+        setScaleFactor(
+          Math.max(MIN_SCALE_FACTOR, Math.min(MAX_SCALE_FACTOR, next)),
+        );
+        return;
+      }
+
+      // drag path
       if (!dragRef.current) return;
       const dx = e.clientX - dragRef.current.x;
       const dy = e.clientY - dragRef.current.y;
-      // generous deadband — fingers and trackpads jitter a few pixels on a
-      // tap, and we don't want to suppress the click+select that follows.
       if (Math.hypot(dx, dy) > 9) dragMovedRef.current = true;
       const k = ROTATE_SENSITIVITY / Math.max(0.5, scaleFactor);
       const newLambda = dragRef.current.rot[0] + dx * k;
@@ -364,11 +391,16 @@ export default function Globe({
     [scaleFactor, queueRotation],
   );
 
-  const onPointerUp = useCallback(() => {
-    dragRef.current = null;
-    isDraggingRef.current = false;
-    // dragMovedRef intentionally NOT reset here — click handlers fire next and
-    // need to see whether the gesture moved. We reset on the next pointerdown.
+  const onPointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) {
+      pinchRef.current = null;
+    }
+    if (pointersRef.current.size === 0) {
+      dragRef.current = null;
+      isDraggingRef.current = false;
+    }
+    // dragMovedRef intentionally NOT reset here — click handlers fire next.
   }, []);
 
   // cancel pending rotation RAF on unmount
