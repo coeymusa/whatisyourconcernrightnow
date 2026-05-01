@@ -8,13 +8,17 @@ export type Country = {
   lat: number;
   lon: number;
   m49?: string;
+  // half-spread (degrees) used when scattering plotted dots around the
+  // country so big countries don't pile every voice on the centroid.
+  // Optional; tiny countries get a small default.
+  spread?: { lon: number; lat: number };
 };
 
 export const COUNTRIES: Country[] = [
   // North America
-  { code: "US", name: "United States", lat: 39.8, lon: -98.6, m49: "840" },
-  { code: "CA", name: "Canada", lat: 56.1, lon: -106.3, m49: "124" },
-  { code: "MX", name: "Mexico", lat: 23.6, lon: -102.5, m49: "484" },
+  { code: "US", name: "United States", lat: 39.8, lon: -98.6, m49: "840", spread: { lon: 22, lat: 8 } },
+  { code: "CA", name: "Canada", lat: 56.1, lon: -106.3, m49: "124", spread: { lon: 30, lat: 10 } },
+  { code: "MX", name: "Mexico", lat: 23.6, lon: -102.5, m49: "484", spread: { lon: 9, lat: 5 } },
   { code: "GL", name: "Greenland", lat: 71.7, lon: -42.6, m49: "304" },
   { code: "CU", name: "Cuba", lat: 21.5, lon: -77.8, m49: "192" },
   { code: "HT", name: "Haiti", lat: 18.9, lon: -72.3, m49: "332" },
@@ -32,8 +36,8 @@ export const COUNTRIES: Country[] = [
   { code: "BZ", name: "Belize", lat: 17.2, lon: -88.5, m49: "084" },
 
   // South America
-  { code: "BR", name: "Brazil", lat: -14.2, lon: -51.9, m49: "076" },
-  { code: "AR", name: "Argentina", lat: -38.4, lon: -63.6, m49: "032" },
+  { code: "BR", name: "Brazil", lat: -14.2, lon: -51.9, m49: "076", spread: { lon: 14, lat: 12 } },
+  { code: "AR", name: "Argentina", lat: -38.4, lon: -63.6, m49: "032", spread: { lon: 8, lat: 12 } },
   { code: "CL", name: "Chile", lat: -35.7, lon: -71.5, m49: "152" },
   { code: "CO", name: "Colombia", lat: 4.6, lon: -74.3, m49: "170" },
   { code: "PE", name: "Peru", lat: -9.2, lon: -75.0, m49: "604" },
@@ -93,7 +97,7 @@ export const COUNTRIES: Country[] = [
   { code: "MD", name: "Moldova", lat: 47.4, lon: 28.4, m49: "498" },
   { code: "UA", name: "Ukraine", lat: 48.4, lon: 31.2, m49: "804" },
   { code: "BY", name: "Belarus", lat: 53.7, lon: 27.9, m49: "112" },
-  { code: "RU", name: "Russia", lat: 55.8, lon: 56.6, m49: "643" },
+  { code: "RU", name: "Russia", lat: 55.8, lon: 56.6, m49: "643", spread: { lon: 50, lat: 10 } },
   { code: "EE", name: "Estonia", lat: 58.6, lon: 25.0, m49: "233" },
   { code: "LT", name: "Lithuania", lat: 55.2, lon: 23.9, m49: "440" },
   { code: "LV", name: "Latvia", lat: 56.9, lon: 24.6, m49: "428" },
@@ -119,7 +123,7 @@ export const COUNTRIES: Country[] = [
   { code: "EG", name: "Egypt", lat: 26.8, lon: 30.8, m49: "818" },
   { code: "LY", name: "Libya", lat: 26.3, lon: 17.2, m49: "434" },
   { code: "TN", name: "Tunisia", lat: 33.9, lon: 9.5, m49: "788" },
-  { code: "DZ", name: "Algeria", lat: 28.0, lon: 1.7, m49: "012" },
+  { code: "DZ", name: "Algeria", lat: 28.0, lon: 1.7, m49: "012", spread: { lon: 8, lat: 6 } },
   { code: "MA", name: "Morocco", lat: 31.8, lon: -7.1, m49: "504" },
   { code: "EH", name: "Western Sahara", lat: 24.2, lon: -12.9, m49: "732" },
 
@@ -165,19 +169,19 @@ export const COUNTRIES: Country[] = [
   { code: "GW", name: "Guinea-Bissau", lat: 11.8, lon: -15.2, m49: "624" },
   { code: "SN", name: "Senegal", lat: 14.5, lon: -14.5, m49: "686" },
   { code: "GM", name: "Gambia", lat: 13.4, lon: -15.4, m49: "270" },
-  { code: "ZA", name: "South Africa", lat: -30.6, lon: 22.9, m49: "710" },
+  { code: "ZA", name: "South Africa", lat: -30.6, lon: 22.9, m49: "710", spread: { lon: 6, lat: 4 } },
   { code: "LS", name: "Lesotho", lat: -29.6, lon: 28.2, m49: "426" },
   { code: "SZ", name: "Eswatini", lat: -26.5, lon: 31.5, m49: "748" },
 
   // South & Central Asia
-  { code: "KZ", name: "Kazakhstan", lat: 48.0, lon: 66.9, m49: "398" },
+  { code: "KZ", name: "Kazakhstan", lat: 48.0, lon: 66.9, m49: "398", spread: { lon: 16, lat: 4 } },
   { code: "UZ", name: "Uzbekistan", lat: 41.4, lon: 64.6, m49: "860" },
   { code: "TM", name: "Turkmenistan", lat: 38.9, lon: 59.6, m49: "795" },
   { code: "KG", name: "Kyrgyzstan", lat: 41.2, lon: 74.8, m49: "417" },
   { code: "TJ", name: "Tajikistan", lat: 38.9, lon: 71.3, m49: "762" },
   { code: "MN", name: "Mongolia", lat: 46.9, lon: 103.8, m49: "496" },
   { code: "PK", name: "Pakistan", lat: 30.4, lon: 69.3, m49: "586" },
-  { code: "IN", name: "India", lat: 22.6, lon: 78.9, m49: "356" },
+  { code: "IN", name: "India", lat: 22.6, lon: 78.9, m49: "356", spread: { lon: 11, lat: 9 } },
   { code: "BD", name: "Bangladesh", lat: 23.7, lon: 90.4, m49: "050" },
   { code: "LK", name: "Sri Lanka", lat: 7.9, lon: 80.8, m49: "144" },
   { code: "NP", name: "Nepal", lat: 28.4, lon: 84.1, m49: "524" },
@@ -185,7 +189,7 @@ export const COUNTRIES: Country[] = [
   { code: "MV", name: "Maldives", lat: 3.2, lon: 73.2, m49: "462" },
 
   // East Asia
-  { code: "CN", name: "China", lat: 35.9, lon: 104.2, m49: "156" },
+  { code: "CN", name: "China", lat: 35.9, lon: 104.2, m49: "156", spread: { lon: 18, lat: 10 } },
   { code: "JP", name: "Japan", lat: 36.2, lon: 138.3, m49: "392" },
   { code: "KR", name: "South Korea", lat: 35.9, lon: 127.8, m49: "410" },
   { code: "KP", name: "North Korea", lat: 40.3, lon: 127.5, m49: "408" },
@@ -201,7 +205,7 @@ export const COUNTRIES: Country[] = [
   { code: "MM", name: "Myanmar", lat: 21.9, lon: 95.9, m49: "104" },
   { code: "MY", name: "Malaysia", lat: 4.2, lon: 101.9, m49: "458" },
   { code: "SG", name: "Singapore", lat: 1.35, lon: 103.8, m49: "702" },
-  { code: "ID", name: "Indonesia", lat: -2.5, lon: 118.0, m49: "360" },
+  { code: "ID", name: "Indonesia", lat: -2.5, lon: 118.0, m49: "360", spread: { lon: 14, lat: 4 } },
   { code: "BN", name: "Brunei", lat: 4.5, lon: 114.7, m49: "096" },
   { code: "TL", name: "Timor-Leste", lat: -8.9, lon: 125.7, m49: "626" },
   { code: "PG", name: "Papua New Guinea", lat: -6.3, lon: 143.1, m49: "598" },
@@ -211,7 +215,7 @@ export const COUNTRIES: Country[] = [
   { code: "NC", name: "New Caledonia", lat: -20.9, lon: 165.6, m49: "540" },
   { code: "WS", name: "Samoa", lat: -13.8, lon: -172.1, m49: "882" },
   { code: "TO", name: "Tonga", lat: -21.2, lon: -175.2, m49: "776" },
-  { code: "AU", name: "Australia", lat: -25.3, lon: 133.8, m49: "036" },
+  { code: "AU", name: "Australia", lat: -25.3, lon: 133.8, m49: "036", spread: { lon: 16, lat: 10 } },
   { code: "NZ", name: "New Zealand", lat: -40.9, lon: 174.9, m49: "554" },
 
   // Antarctica

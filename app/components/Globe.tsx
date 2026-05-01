@@ -563,12 +563,18 @@ export default function Globe({
       if (!country) return null;
       let h = 0;
       for (let i = 0; i < c.id.length; i++) h = (h * 31 + c.id.charCodeAt(i)) >>> 0;
-      const dx = (((h >>> 0) % 1000) / 1000 - 0.5) * 4;
-      const dy = ((((h * 7) >>> 0) % 1000) / 1000 - 0.5) * 3;
+      // deterministic offset in [-1, 1] per axis
+      const ox = (((h >>> 0) % 1000) / 1000 - 0.5) * 2;
+      const oy = ((((h * 7) >>> 0) % 1000) / 1000 - 0.5) * 2;
+      // big countries (US, RU, CA, etc.) declare spread half-widths in
+      // countries.ts so dots scatter across the country instead of piling
+      // on the centroid. small countries fall through to a tight default.
+      const spreadLon = country.spread?.lon ?? 1.5;
+      const spreadLat = country.spread?.lat ?? 1.0;
       const p = projectIfVisible(
         projection,
-        country.lon + dx * 0.5,
-        country.lat + dy * 0.4,
+        country.lon + ox * spreadLon,
+        country.lat + oy * spreadLat,
       );
       if (!p) return null;
       return {
