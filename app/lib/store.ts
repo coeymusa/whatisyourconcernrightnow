@@ -64,11 +64,13 @@ export function useConcernRecord() {
         ts: Date.now(),
       };
       setConcerns((prev) => [...prev, c]);
-      const nextDelay = 4500 + Math.random() * 6000;
+      // slow cadence — every ~14–28 seconds. lets the page breathe and not
+      // feel like a fake demo.
+      const nextDelay = 14000 + Math.random() * 14000;
       timer = window.setTimeout(tick, nextDelay);
     };
 
-    timer = window.setTimeout(tick, 3500);
+    timer = window.setTimeout(tick, 9000);
     return () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);

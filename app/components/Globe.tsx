@@ -475,6 +475,24 @@ export default function Globe({
         </h1>
 
         <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/70 sm:gap-4">
+          <a
+            href="https://github.com/coeymusa/whatisyourconcernrightnow"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden items-center gap-1.5 text-bone/55 transition hover:text-bone sm:inline-flex"
+            aria-label="view source on github"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              aria-hidden
+            >
+              <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.32c-2.22.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.16-.89-1.16-.73-.5.05-.49.05-.49.81.06 1.23.83 1.23.83.71 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z" />
+            </svg>
+            <span className="hidden lg:inline">open source</span>
+          </a>
           <DonateLink variant="compact" />
           <button
             onClick={() => {
@@ -768,7 +786,7 @@ export default function Globe({
         </div>
 
         {/* zoom pill */}
-        <div className="pointer-events-auto absolute bottom-32 right-5 z-20 hidden flex-col gap-1 font-mono text-[10px] tracking-[0.22em] text-bone/60 sm:flex">
+        <div className="pointer-events-auto absolute bottom-6 right-5 z-20 hidden flex-col gap-1 font-mono text-[10px] tracking-[0.22em] text-bone/60 sm:flex">
           <button
             onClick={() => setScaleFactor((s) => Math.min(MAX_SCALE_FACTOR, s * 1.18))}
             className="border border-bone/25 bg-ink/60 px-3 py-1.5 backdrop-blur transition hover:border-blood hover:text-blood"
@@ -794,6 +812,27 @@ export default function Globe({
             reset
           </button>
         </div>
+
+        {/* scroll to explore */}
+        <button
+          onClick={() => {
+            if (typeof document !== "undefined") {
+              document
+                .getElementById("explore")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }}
+          className="
+            pointer-events-auto absolute bottom-6 left-1/2 z-20 inline-flex -translate-x-1/2
+            items-center gap-2 border border-bone/25 bg-ink/70 px-4 py-2.5
+            font-mono text-[10px] uppercase tracking-[0.28em] text-bone/80
+            backdrop-blur transition hover:border-blood hover:text-blood
+          "
+          aria-label="scroll to explore"
+        >
+          <span>explore the record</span>
+          <span className="float-down text-blood">↓</span>
+        </button>
       </div>
 
       {/* country lens overlay */}

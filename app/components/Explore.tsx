@@ -108,7 +108,10 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
   const canLoadMore = visible < filtered.length;
 
   return (
-    <section className="paper-grain relative isolate bg-paper px-5 py-20 text-ink sm:px-10 sm:py-28 lg:px-16">
+    <section
+      id="explore"
+      className="paper-grain relative isolate bg-paper px-5 py-20 text-ink sm:px-10 sm:py-28 lg:px-16"
+    >
       <div className="mx-auto max-w-7xl">
         {/* masthead */}
         <div className="flex flex-col gap-3 border-b border-ink/15 pb-6 sm:flex-row sm:items-end sm:justify-between">
