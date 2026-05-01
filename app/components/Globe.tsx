@@ -135,6 +135,28 @@ export default function Globe({
   const isDraggingRef = useRef(false);
   const dragMovedRef = useRef(false);
 
+  // RAF-throttled rotation: coalesce multiple pointermove events per frame
+  // into a single setRotation, so even rapid drags don't hammer React with
+  // 60+ re-renders per second on slower devices.
+  const rafRef = useRef<number | null>(null);
+  const pendingRotRef = useRef<[number, number] | null>(null);
+  const flushRotation = useCallback(() => {
+    rafRef.current = null;
+    if (pendingRotRef.current) {
+      setRotation(pendingRotRef.current);
+      pendingRotRef.current = null;
+    }
+  }, []);
+  const queueRotation = useCallback(
+    (next: [number, number]) => {
+      pendingRotRef.current = next;
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(flushRotation);
+      }
+    },
+    [flushRotation],
+  );
+
   const selectCountry = useCallback((code: string | null) => {
     setSelectedCountry(code);
   }, []);
@@ -314,24 +336,34 @@ export default function Globe({
     [rotation],
   );
 
-  const onPointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.x;
-    const dy = e.clientY - dragRef.current.y;
-    // generous deadband — fingers and trackpads jitter a few pixels on a
-    // tap, and we don't want to suppress the click+select that follows.
-    if (Math.hypot(dx, dy) > 9) dragMovedRef.current = true;
-    const k = ROTATE_SENSITIVITY / Math.max(0.5, scaleFactor);
-    const newLambda = dragRef.current.rot[0] + dx * k;
-    const newPhi = Math.max(-88, Math.min(88, dragRef.current.rot[1] - dy * k));
-    setRotation([newLambda, newPhi]);
-  }, [scaleFactor]);
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (!dragRef.current) return;
+      const dx = e.clientX - dragRef.current.x;
+      const dy = e.clientY - dragRef.current.y;
+      // generous deadband — fingers and trackpads jitter a few pixels on a
+      // tap, and we don't want to suppress the click+select that follows.
+      if (Math.hypot(dx, dy) > 9) dragMovedRef.current = true;
+      const k = ROTATE_SENSITIVITY / Math.max(0.5, scaleFactor);
+      const newLambda = dragRef.current.rot[0] + dx * k;
+      const newPhi = Math.max(-88, Math.min(88, dragRef.current.rot[1] - dy * k));
+      queueRotation([newLambda, newPhi]);
+    },
+    [scaleFactor, queueRotation],
+  );
 
   const onPointerUp = useCallback(() => {
     dragRef.current = null;
     isDraggingRef.current = false;
     // dragMovedRef intentionally NOT reset here — click handlers fire next and
     // need to see whether the gesture moved. We reset on the next pointerdown.
+  }, []);
+
+  // cancel pending rotation RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   // wheel zoom
