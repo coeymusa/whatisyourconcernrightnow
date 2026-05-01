@@ -58,6 +58,7 @@ export default function DemoPage() {
         responses={DEMO_SOLUTIONS.length}
         loaded={true}
         autoRotate={6}
+        bubbleDelay={5000}
         onSubmit={submit}
         onOpen={open}
       />

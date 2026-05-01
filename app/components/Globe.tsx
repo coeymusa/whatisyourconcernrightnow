@@ -46,6 +46,9 @@ type Props = {
   // demo uses ~6 deg/s; main site uses ~2.5 deg/s for a barely-perceptible
   // drift that signals "live" without distracting from posts being read.
   autoRotate?: number;
+  // ms before the first bubble pops. demo bumps this to ~5s so the opening
+  // shot is a calm, empty globe.
+  bubbleDelay?: number;
   onSubmit: (input: {
     age: number;
     countryCode: string;
@@ -119,6 +122,7 @@ export default function Globe({
   responses,
   loaded = false,
   autoRotate = 0,
+  bubbleDelay = 800,
   onSubmit,
   onOpen,
 }: Props) {
@@ -339,13 +343,13 @@ export default function Globe({
       nextTimer = window.setTimeout(tick, nextDelay);
     }
 
-    const t0 = window.setTimeout(tick, 800);
+    const t0 = window.setTimeout(tick, bubbleDelay);
     return () => {
       cancelled = true;
       window.clearTimeout(t0);
       if (nextTimer !== undefined) window.clearTimeout(nextTimer);
     };
-  }, [size.w, size.h]);
+  }, [size.w, size.h, bubbleDelay]);
 
   // ----- Pointer interactions: drag (1 finger) + pinch (2 fingers) ------
   const dragRef = useRef<{ x: number; y: number; rot: [number, number] } | null>(null);
