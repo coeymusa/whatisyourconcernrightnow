@@ -112,6 +112,74 @@ If even one of these mentions it on-camera, the spike is real.
 | `@LexFridman` | Massive interview audience. |
 | `@MrBeast` | Long shot but he occasionally amplifies social-good projects. |
 
+## Internet culture publications + brand accounts
+
+Follow the publications, not just the people. They sometimes feature submissions in roundups.
+
+| Handle | Why |
+|---|---|
+| `@BoingBoing` | Boing Boing — *the* "wonderful things" of the internet. Will feature novel sites. |
+| `@LaughingSquid` | Laughing Squid. Curates strange + beautiful internet finds. |
+| `@TheAtlantic` | Long-form journalism. Will pick up novel cultural projects. |
+| `@NewYorker` | New Yorker. Same. |
+| `@WIRED` | Tech culture. |
+| `@ProductHunt` | If you submit, this is where indie-builder-adjacent people see it. |
+| `@nytmag` | NYT Magazine. Long-form features. |
+
+## Substack / newsletter writers with engaged audiences
+
+People whose readers click links they share.
+
+| Handle | Why |
+|---|---|
+| `@byrnehobart` | The Diff. Big finance + tech-adjacent newsletter. |
+| `@bariweiss` | Free Press. Loud + curious about culture. |
+| `@MaxRead` | Read Max. Internet-culture newsletter. |
+| `@nayafia` | Nadia Asparouhova. Internet sociology, open-source culture. |
+| `@audreywatters` | Ed-tech critic. Adjacent essayist with deep audience. |
+| `@douglasrushkoff` | Team Human. Tech + humanism. |
+| `@tristanharris` | Center for Humane Technology. Will love the no-algorithm angle. |
+| `@cremieuxrecueil` | Stat-heavy newsletter. |
+
+## Design / aesthetic Twitter
+
+The editorial-dystopia look is *their* taste. Will share for the visual.
+
+| Handle | Why |
+|---|---|
+| `@swissmiss` | Tina Roth Eisenberg. Curator with massive audience. |
+| `@kepano` | Steph Ango. Design + thinking. Will appreciate the typography choices. |
+| `@itsnicethat` | Design publication. |
+| `@formerstudent` | Design + architecture curator. |
+| `@CreativeReview` | Creative Review. Editorial design. |
+| `@brandnew` | Branding-focused, sharp aesthetic taste. |
+
+## Sociologists of the internet / online life
+
+The thematic experts who'd write a thinkpiece.
+
+| Handle | Why |
+|---|---|
+| `@zeynep` | (already in journalists) |
+| `@nayafia` | (already in newsletters) |
+| `@sherryturkle` | MIT, *Reclaiming Conversation*. The exact academic for this topic. |
+| `@DanWilliams_` | Writer on epistemics, online discourse. |
+| `@AdamDavidsonNYC` | Economic / cultural commentary. |
+| `@ChrisBail` | Duke sociologist of social media. |
+| `@CassSunstein` | Big-name legal scholar with cultural reach. |
+
+## International / global voices
+
+Your site is global; tap non-US amplifiers.
+
+| Handle | Why |
+|---|---|
+| `@RanaForoohar` | FT columnist. Global commentary. |
+| `@mehdirhasan` | Journalist with global audience. |
+| `@gideonrachman` | FT chief foreign affairs. |
+| `@AnneApplebaum` | Atlantic writer on democracy + global affairs. |
+| `@aluthra` | Asia-focused journalist. |
+
 ---
 
 ## Engagement script — same as before, repeated because it matters
