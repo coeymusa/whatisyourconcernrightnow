@@ -110,7 +110,7 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
   return (
     <section
       id="explore"
-      className="paper-grain relative isolate bg-paper px-5 py-20 text-ink sm:px-10 sm:py-28 lg:px-16"
+      className="paper-grain relative isolate bg-paper-deep px-5 py-20 text-ink sm:px-10 sm:py-28 lg:px-16"
     >
       <div className="mx-auto max-w-7xl">
         {/* masthead */}
@@ -254,29 +254,29 @@ export default function Explore({ concerns, solutions, onOpen }: Props) {
                 >
                   <button
                     onClick={() => onOpen(c)}
-                    className="group flex h-full w-full flex-col gap-3 border border-ink/40 bg-ink p-5 text-left text-bone transition hover:border-blood hover:shadow-[0_18px_40px_-22px_rgba(0,0,0,0.5)]"
+                    className="group flex h-full w-full flex-col gap-3 border border-ink/15 bg-bone p-5 text-left text-ink transition hover:border-ink hover:shadow-[0_14px_36px_-20px_rgba(10,9,8,0.35)]"
                   >
-                    <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-bone/55">
+                    <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
                       <span className="text-blood">
                         {findCountry(c.countryCode)?.name ?? c.countryCode}
                       </span>
                       <span>age {c.age}</span>
                     </div>
-                    <p className="font-serif text-xl italic leading-snug text-bone sm:text-[1.4rem]">
+                    <p className="font-serif text-xl leading-snug text-ink sm:text-[1.35rem]">
                       “{c.text}”
                     </p>
                     {c.original && (
-                      <p className="font-mono text-[10px] italic leading-relaxed text-bone/50">
+                      <p className="font-mono text-[10px] italic leading-relaxed text-ink/45">
                         {c.original.lang}: “{c.original.text}”
                       </p>
                     )}
-                    <div className="mt-auto flex items-center justify-between border-t border-bone/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-bone/55">
+                    <div className="mt-auto flex items-center justify-between border-t border-ink/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
                       <span>{CATEGORY_LABELS[c.category].toLowerCase()}</span>
                       <span className="flex items-center gap-3">
                         <span className="text-amber">
                           {respN} response{respN === 1 ? "" : "s"}
                         </span>
-                        <span className="text-bone/40">
+                        <span className="text-ink/40">
                           {mounted ? relTime(c.ts) : "—"} ago
                         </span>
                       </span>

@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Concern, ConcernCategory, Solution } from "./types";
 import { ageToBracket } from "./types";
-import { SEED_CONCERNS, SEED_SOLUTIONS, STREAM_FRAGMENTS } from "./seed";
 
 const STORAGE_KEY = "concern.submissions.v1";
 const SOL_STORAGE_KEY = "concern.solutions.v1";
@@ -35,8 +34,8 @@ function saveToStorage<T>(key: string, items: T[]) {
  * Includes both concerns and solutions; the page is one shared timeline.
  */
 export function useConcernRecord() {
-  const [concerns, setConcerns] = useState<Concern[]>(() => SEED_CONCERNS);
-  const [solutions, setSolutions] = useState<Solution[]>(() => SEED_SOLUTIONS);
+  const [concerns, setConcerns] = useState<Concern[]>([]);
+  const [solutions, setSolutions] = useState<Solution[]>([]);
 
   // hydrate user submissions from storage on mount
   useEffect(() => {
@@ -84,43 +83,6 @@ export function useConcernRecord() {
     return () => {
       cancelled = true;
       window.clearInterval(id);
-    };
-  }, []);
-
-  // First-visit demo: surface exactly 2 synthetic arrivals so visitors get
-  // a feel for how live posts will appear. Stops after the second. After
-  // that only real, polled submissions surface.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    let cancelled = false;
-
-    const a = Math.floor(Math.random() * STREAM_FRAGMENTS.length);
-    const b = (a + 3) % STREAM_FRAGMENTS.length;
-
-    function pop(idx: number, label: string, delay: number) {
-      return window.setTimeout(() => {
-        if (cancelled) return;
-        const frag = STREAM_FRAGMENTS[idx];
-        const c: Concern = {
-          id: `demo-${label}`,
-          age: frag.age,
-          bracket: ageToBracket(frag.age),
-          countryCode: frag.countryCode,
-          text: frag.text,
-          category: frag.category,
-          ts: Date.now(),
-        };
-        setConcerns((prev) => [...prev, c]);
-      }, delay);
-    }
-
-    const t1 = pop(a, "1", 5500);
-    const t2 = pop(b, "2", 14500);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
     };
   }, []);
 
