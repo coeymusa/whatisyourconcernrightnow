@@ -16,6 +16,11 @@ export default function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/pulse" className="hover:text-bone">
+                the pulse
+              </Link>
+            </li>
+            <li>
               <Link href="/about" className="hover:text-bone">
                 about the record
               </Link>

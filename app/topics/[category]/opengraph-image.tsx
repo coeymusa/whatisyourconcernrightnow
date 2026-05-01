@@ -100,7 +100,7 @@ export default async function TopicOG({ params }: Props) {
           <span style={{ display: "flex" }}>What the world</span>
           <span style={{ display: "flex" }}>is saying about</span>
           <span style={{ display: "flex", color: "#c7321b" }}>
-            {label.toLowerCase()}
+            <span style={{ display: "flex" }}>{label.toLowerCase()}</span>
             <span style={{ color: "#0a0908" }}>.</span>
           </span>
         </div>
