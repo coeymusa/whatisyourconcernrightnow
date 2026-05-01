@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
 import { COUNTRIES } from "./lib/countries";
 import { CATEGORY_ORDER } from "./lib/types";
+import { fetchRecent, hasSupabase } from "./lib/supabase";
 
 const SITE_URL = "https://whatisyourconcern.com";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -68,5 +69,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...countryPages, ...topicPages];
+  // Per-dispatch permalinks. Cap at 500 so the sitemap doesn't bloat past the
+  // Google sitemap soft limit. Newer concerns are listed first.
+  let dispatchPages: MetadataRoute.Sitemap = [];
+  if (hasSupabase()) {
+    try {
+      const rows = await fetchRecent(500, 0, 0);
+      dispatchPages = rows.map((r) => ({
+        url: `${SITE_URL}/dispatch/${r.id}`,
+        lastModified: new Date(r.created_at),
+        changeFrequency: "monthly" as const,
+        priority: 0.5,
+      }));
+    } catch {
+      dispatchPages = [];
+    }
+  }
+
+  return [
+    ...staticPages,
+    ...countryPages,
+    ...topicPages,
+    ...dispatchPages,
+  ];
 }

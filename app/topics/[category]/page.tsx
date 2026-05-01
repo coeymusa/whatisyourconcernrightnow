@@ -285,12 +285,17 @@ export default async function TopicPage({ params }: Props) {
                 const country = findCountry(c.countryCode);
                 return (
                   <li key={c.id} className="relative">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/40">
-                      no. {String(i + 1).padStart(3, "0")} — anon dispatch
-                    </div>
-                    <blockquote className="mt-3 font-serif text-2xl leading-[1.18] text-ink sm:text-3xl">
-                      &ldquo;{c.text}&rdquo;
-                    </blockquote>
+                    <Link
+                      href={`/dispatch/${c.id}`}
+                      className="block group"
+                    >
+                      <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-ink/40 transition group-hover:text-ink">
+                        no. {String(i + 1).padStart(3, "0")} — anon dispatch
+                      </div>
+                      <blockquote className="mt-3 font-serif text-2xl leading-[1.18] text-ink decoration-blood/40 underline-offset-[6px] group-hover:underline sm:text-3xl">
+                        &ldquo;{c.text}&rdquo;
+                      </blockquote>
+                    </Link>
                     <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink/15 pt-3 font-mono text-[11px] uppercase tracking-[0.22em] text-ink/55">
                       {country ? (
                         <Link
@@ -306,6 +311,13 @@ export default async function TopicPage({ params }: Props) {
                       <span>ages {c.bracket}</span>
                       <span className="text-ink/30">·</span>
                       <span>{relativeDate(c.ts)}</span>
+                      <span className="text-ink/30">·</span>
+                      <Link
+                        href={`/dispatch/${c.id}`}
+                        className="text-ink/55 hover:text-ink"
+                      >
+                        permalink →
+                      </Link>
                     </div>
                   </li>
                 );
