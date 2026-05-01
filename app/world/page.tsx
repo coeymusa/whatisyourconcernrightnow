@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { COUNTRIES } from "../lib/countries";
+import { fetchCountryCounts } from "../lib/supabase";
 import {
   Breadcrumb,
   Colophon,
@@ -16,7 +17,7 @@ const SITE_URL = "https://whatisyourconcern.com";
 export const metadata: Metadata = {
   title: "Concerns by country",
   description:
-    "Browse anonymous concerns from people around the world, organized by country. What is humanity afraid of, country by country?",
+    "Browse anonymous concerns and live public discourse from people around the world, organized by country. What is humanity afraid of, country by country?",
   alternates: { canonical: `${SITE_URL}/world` },
   openGraph: {
     title: "Concerns by country · what is your concern?",
@@ -26,6 +27,8 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+
+export const revalidate = 300;
 
 const breadcrumbs = {
   "@context": "https://schema.org",
@@ -75,7 +78,13 @@ function regionFor(code: string): string {
   return "VI — Sub-Saharan Africa";
 }
 
-export default function WorldDirectoryPage() {
+export default async function WorldDirectoryPage() {
+  const counts = await fetchCountryCounts();
+  const totalVoices = [...counts.values()].reduce((a, b) => a + b, 0);
+  const liveCountries = counts.size;
+
+  // Group by region. Within each region, countries with submissions float to
+  // the top so the page visibly rewards the active ones.
   const grouped = new Map<string, typeof COUNTRIES>();
   for (const c of COUNTRIES) {
     const r = regionFor(c.code);
@@ -83,8 +92,20 @@ export default function WorldDirectoryPage() {
     grouped.get(r)!.push(c);
   }
   for (const list of grouped.values()) {
-    list.sort((a, b) => a.name.localeCompare(b.name));
+    list.sort((a, b) => {
+      const ca = counts.get(a.code) ?? 0;
+      const cb = counts.get(b.code) ?? 0;
+      if (ca !== cb) return cb - ca;
+      return a.name.localeCompare(b.name);
+    });
   }
+
+  // Top 6 most active countries — featured at the top of the page so a
+  // first-time visitor lands on something already breathing.
+  const topActive = [...COUNTRIES]
+    .filter((c) => (counts.get(c.code) ?? 0) > 0)
+    .sort((a, b) => (counts.get(b.code) ?? 0) - (counts.get(a.code) ?? 0))
+    .slice(0, 6);
 
   const REGION_ORDER = [
     "I — North America & Caribbean",
@@ -107,7 +128,10 @@ export default function WorldDirectoryPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
       />
 
-      <TopBar tone="paper" middle="vol. I · § W — index by country" />
+      <TopBar
+        tone="paper"
+        middle={`vol. I · § W — index by country · ${liveCountries} live`}
+      />
 
       <article className="relative mx-auto max-w-5xl px-5 pt-16 pb-20 sm:px-10 sm:pt-20 sm:pb-24 lg:px-16">
         <CornerMark tone="paper" text="file no. W — world index" />
@@ -127,44 +151,110 @@ export default function WorldDirectoryPage() {
         </h1>
 
         <p className="mt-12 max-w-2xl border-l-2 border-blood/40 pl-6 font-serif text-xl italic leading-snug text-ink-mid sm:text-2xl">
-          What is the world afraid of, country by country? Pick a place to
-          read the anonymous concerns submitted from there.
+          What is the world afraid of, country by country?{" "}
+          {liveCountries > 0
+            ? `${totalVoices.toLocaleString()} voices have been recorded so far, from ${liveCountries} countries.`
+            : "Pick a country to read what's been recorded from there."}
         </p>
 
         <p className="mt-6 max-w-2xl font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
-          Each entry below is a country dossier. Concerns are shown in the
-          order they arrived, translated into English where submitted in
-          another language.
+          Each entry below is a country dossier — anonymous voices submitted
+          from inside the country, alongside the public discourse on the wire
+          right now. Active countries are listed first.
         </p>
 
-        <div className="mt-16 space-y-16">
-          {REGION_ORDER.filter((r) => grouped.has(r)).map((region) => (
-            <section key={region}>
-              <div className="flex items-baseline gap-4 border-b border-ink/15 pb-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
-                  region
-                </span>
-                <h2 className="font-serif text-2xl italic leading-tight text-ink sm:text-3xl">
-                  {region}
-                </h2>
-              </div>
-              <ul className="mt-6 grid gap-x-8 gap-y-3 font-sans text-base text-ink-soft sm:grid-cols-3 sm:text-lg">
-                {grouped.get(region)!.map((c) => (
-                  <li key={c.code} className="flex items-baseline gap-3">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink/40">
-                      {c.code}
-                    </span>
+        {topActive.length > 0 && (
+          <section className="mt-16">
+            <div className="flex items-baseline gap-4 border-b border-ink/15 pb-4">
+              <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
+                most active
+              </span>
+              <h2 className="font-serif text-2xl italic leading-tight text-ink sm:text-3xl">
+                Where the record is loudest
+              </h2>
+            </div>
+            <ul className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-3">
+              {topActive.map((c, i) => {
+                const n = counts.get(c.code) ?? 0;
+                return (
+                  <li key={c.code}>
                     <Link
                       href={`/world/${c.code}`}
-                      className="underline-offset-4 hover:text-ink hover:underline"
+                      className="group block border-l-2 border-blood/30 pl-4 transition hover:border-blood"
                     >
-                      {c.name}
+                      <div className="flex items-baseline gap-3 font-mono text-[10px] uppercase tracking-[0.24em] text-ink/45">
+                        <span>no. {String(i + 1).padStart(2, "0")}</span>
+                        <span className="text-ink/35">{c.code}</span>
+                      </div>
+                      <div className="mt-1 flex items-baseline gap-3">
+                        <span className="font-serif text-xl italic text-ink group-hover:text-blood sm:text-2xl">
+                          {c.name}
+                        </span>
+                        <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-blood">
+                          {n} {n === 1 ? "voice" : "voices"}
+                        </span>
+                      </div>
                     </Link>
                   </li>
-                ))}
-              </ul>
-            </section>
-          ))}
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        <div className="mt-20 space-y-16">
+          {REGION_ORDER.filter((r) => grouped.has(r)).map((region) => {
+            const list = grouped.get(region)!;
+            const regionVoices = list.reduce(
+              (a, c) => a + (counts.get(c.code) ?? 0),
+              0,
+            );
+            return (
+              <section key={region}>
+                <div className="flex items-baseline gap-4 border-b border-ink/15 pb-4">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
+                    region
+                  </span>
+                  <h2 className="font-serif text-2xl italic leading-tight text-ink sm:text-3xl">
+                    {region}
+                  </h2>
+                  {regionVoices > 0 && (
+                    <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.22em] text-ink/45">
+                      {regionVoices} {regionVoices === 1 ? "voice" : "voices"}
+                    </span>
+                  )}
+                </div>
+                <ul className="mt-6 grid gap-x-8 gap-y-3 font-sans text-base text-ink-soft sm:grid-cols-3 sm:text-lg">
+                  {list.map((c) => {
+                    const n = counts.get(c.code) ?? 0;
+                    return (
+                      <li
+                        key={c.code}
+                        className="flex items-baseline gap-3"
+                      >
+                        <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink/40">
+                          {c.code}
+                        </span>
+                        <Link
+                          href={`/world/${c.code}`}
+                          className={`underline-offset-4 hover:text-ink hover:underline ${
+                            n === 0 ? "text-ink/55" : ""
+                          }`}
+                        >
+                          {c.name}
+                        </Link>
+                        {n > 0 && (
+                          <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.22em] text-blood">
+                            {n}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })}
         </div>
 
         <Colophon

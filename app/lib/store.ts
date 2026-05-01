@@ -32,15 +32,24 @@ function saveToStorage<T>(key: string, items: T[]) {
 /**
  * The "global record" — seed + ambient synthetic arrivals + user submissions.
  * Includes both concerns and solutions; the page is one shared timeline.
+ *
+ * `initial` is optional server-rendered seed data. When provided, the hook
+ * starts with those values instead of [] and immediately reports loaded —
+ * so the homepage paints with real numbers on first byte instead of 0/0/0.
  */
-export function useConcernRecord() {
-  const [concerns, setConcerns] = useState<Concern[]>([]);
-  const [solutions, setSolutions] = useState<Solution[]>([]);
-  // tracks whether the very first poll has completed — so the UI can
-  // hold off rendering the 'the record is empty' empty state until we
-  // actually know it's empty (rather than showing it during the brief
-  // initial-load window before the first fetch lands)
-  const [loaded, setLoaded] = useState(false);
+export function useConcernRecord(initial?: {
+  concerns?: Concern[];
+  solutions?: Solution[];
+}) {
+  const [concerns, setConcerns] = useState<Concern[]>(
+    initial?.concerns ?? [],
+  );
+  const [solutions, setSolutions] = useState<Solution[]>(
+    initial?.solutions ?? [],
+  );
+  const [loaded, setLoaded] = useState<boolean>(
+    !!(initial?.concerns?.length || initial?.solutions?.length),
+  );
 
   // hydrate user submissions from storage on mount
   useEffect(() => {

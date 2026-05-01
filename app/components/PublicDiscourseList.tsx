@@ -24,7 +24,8 @@ export default function PublicDiscourseList({
   if (signals.length === 0) {
     return (
       <p className="font-serif text-xl italic leading-snug text-ink-mid sm:text-2xl">
-        The wires are quiet right now. Try again in a few minutes.
+        The wire hasn't surfaced anything yet — the next update will appear
+        here automatically.
       </p>
     );
   }

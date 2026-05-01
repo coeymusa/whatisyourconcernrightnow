@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CATEGORY_LABELS, CATEGORY_ORDER } from "../lib/types";
+import { fetchCategoryCounts } from "../lib/supabase";
 import {
   Breadcrumb,
   Colophon,
@@ -26,6 +27,8 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+
+export const revalidate = 300;
 
 const breadcrumbs = {
   "@context": "https://schema.org",
@@ -64,8 +67,20 @@ const TOPIC_BLURB: Record<string, string> = {
     "Tomorrow, kids, the species — and whether anyone is coming for it.",
 };
 
-export default function TopicsDirectoryPage() {
+export default async function TopicsDirectoryPage() {
+  const counts = await fetchCategoryCounts();
   const topics = CATEGORY_ORDER.filter((c) => c !== "other");
+  // Order by activity descending, with the index respecting that — so the
+  // hottest topic sits up top.
+  const sorted = [...topics].sort((a, b) => {
+    const ca = counts.get(a) ?? 0;
+    const cb = counts.get(b) ?? 0;
+    if (ca !== cb) return cb - ca;
+    return topics.indexOf(a) - topics.indexOf(b);
+  });
+  const totalVoices = [...counts.entries()]
+    .filter(([k]) => k !== "other")
+    .reduce((a, [, v]) => a + v, 0);
 
   return (
     <PageBg tone="paper">
@@ -74,7 +89,10 @@ export default function TopicsDirectoryPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
       />
 
-      <TopBar tone="paper" middle="vol. I · § X — index by topic" />
+      <TopBar
+        tone="paper"
+        middle={`vol. I · § X — index by topic · ${totalVoices} voices`}
+      />
 
       <article className="relative mx-auto max-w-5xl px-5 pt-16 pb-20 sm:px-10 sm:pt-20 sm:pb-24 lg:px-16">
         <CornerMark tone="paper" text="file no. X — topic index" />
@@ -95,36 +113,42 @@ export default function TopicsDirectoryPage() {
 
         <p className="mt-12 max-w-2xl border-l-2 border-blood/40 pl-6 font-serif text-xl italic leading-snug text-ink-mid sm:text-2xl">
           What is the world afraid of, by category? Pick a topic to read what
-          people across every country have written about it.
+          people across every country have written about it, alongside the
+          public discourse on the wire.
         </p>
 
         <ul className="mt-16 grid gap-10 border-t border-ink/15 pt-12 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-14">
-          {topics.map((cat, i) => (
-            <li key={cat}>
-              <Link
-                href={`/topics/${cat}`}
-                className="group block"
-              >
-                <div className="flex items-baseline gap-4">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink/45">
-                    topic
-                  </span>
-                </div>
-                <h2 className="mt-2 font-serif text-3xl italic leading-tight text-ink transition group-hover:text-blood sm:text-4xl">
-                  {CATEGORY_LABELS[cat]}
-                </h2>
-                <p className="mt-4 font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
-                  {TOPIC_BLURB[cat]}
-                </p>
-                <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.32em] text-ink/55 transition group-hover:text-ink">
-                  read the dossier →
-                </div>
-              </Link>
-            </li>
-          ))}
+          {sorted.map((cat, i) => {
+            const n = counts.get(cat) ?? 0;
+            return (
+              <li key={cat}>
+                <Link href={`/topics/${cat}`} className="group block">
+                  <div className="flex items-baseline gap-4">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-blood">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink/45">
+                      topic
+                    </span>
+                    {n > 0 && (
+                      <span className="ml-auto font-mono text-[11px] uppercase tracking-[0.22em] text-blood">
+                        {n} {n === 1 ? "voice" : "voices"}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="mt-2 font-serif text-3xl italic leading-tight text-ink transition group-hover:text-blood sm:text-4xl">
+                    {CATEGORY_LABELS[cat]}
+                  </h2>
+                  <p className="mt-4 font-sans text-base leading-relaxed text-ink-soft sm:text-lg">
+                    {TOPIC_BLURB[cat]}
+                  </p>
+                  <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.32em] text-ink/55 transition group-hover:text-ink">
+                    read the dossier →
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         <Colophon

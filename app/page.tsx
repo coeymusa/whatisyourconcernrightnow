@@ -1,53 +1,69 @@
-"use client";
+import HomeClient from "./HomeClient";
+import { fetchRecent, fetchSolutions, hasSupabase } from "./lib/supabase";
+import type {
+  Concern,
+  ConcernCategory,
+  Solution,
+} from "./lib/types";
 
-import { useCallback, useMemo, useState } from "react";
-import Globe from "./components/Globe";
-import Explore from "./components/Explore";
-import Manifesto from "./components/Manifesto";
-import EntryDrawer from "./components/EntryDrawer";
-import { useConcernRecord } from "./lib/store";
-import type { Concern } from "./lib/types";
+// Server-rendered shell. Fetches initial concerns + solutions from Supabase
+// at request time, hands them to the interactive client. First paint shows
+// real numbers (not 0 voices · 0 countries · 0 responses) and the static
+// HTML contains real concern text — better for crawlers and first-impression.
+export const revalidate = 30;
 
-export default function Home() {
-  const { concerns, solutions, submit, submitSolution, loadOlder, loaded } =
-    useConcernRecord();
-  const [openConcern, setOpenConcern] = useState<Concern | null>(null);
+async function loadInitial(): Promise<{
+  concerns: Concern[];
+  solutions: Solution[];
+}> {
+  if (!hasSupabase()) return { concerns: [], solutions: [] };
 
-  const open = useCallback((c: Concern) => setOpenConcern(c), []);
-  const close = useCallback(() => setOpenConcern(null), []);
+  const [concernRows, solutionRows] = await Promise.all([
+    fetchRecent(200, 0, 0),
+    fetchSolutions(200, 0, 0),
+  ]);
 
-  const countries = useMemo(() => {
-    const s = new Set<string>();
-    for (const c of concerns) s.add(c.countryCode);
-    return s.size;
-  }, [concerns]);
+  const concerns: Concern[] = concernRows.map((r) => ({
+    id: r.id,
+    age: r.age,
+    bracket: r.bracket as Concern["bracket"],
+    countryCode: r.country_code,
+    text: r.text,
+    category: r.category as ConcernCategory,
+    ts: new Date(r.created_at).getTime(),
+    score: r.score ?? 0,
+    upvotes: r.upvotes ?? 0,
+    downvotes: r.downvotes ?? 0,
+    ...(r.original_lang && r.original_text
+      ? { original: { lang: r.original_lang, text: r.original_text } }
+      : {}),
+  }));
 
+  const solutions: Solution[] = solutionRows.map((r) => ({
+    id: r.id,
+    concernId: r.concern_id,
+    age: r.age,
+    bracket: r.bracket as Solution["bracket"],
+    countryCode: r.country_code,
+    text: r.text,
+    ts: new Date(r.created_at).getTime(),
+    score: r.score ?? 0,
+    upvotes: r.upvotes ?? 0,
+    downvotes: r.downvotes ?? 0,
+    ...(r.original_lang && r.original_text
+      ? { original: { lang: r.original_lang, text: r.original_text } }
+      : {}),
+  }));
+
+  return { concerns, solutions };
+}
+
+export default async function Home() {
+  const { concerns, solutions } = await loadInitial();
   return (
-    <main className="bg-ink text-bone">
-      <Globe
-        concerns={concerns}
-        solutions={solutions}
-        totalCountries={countries}
-        responses={solutions.length}
-        loaded={loaded}
-        autoRotate={2.5}
-        onSubmit={submit}
-        onOpen={open}
-      />
-      <Explore
-        concerns={concerns}
-        solutions={solutions}
-        onOpen={open}
-        loadOlder={loadOlder}
-      />
-      <Manifesto />
-
-      <EntryDrawer
-        concern={openConcern}
-        solutions={solutions}
-        onClose={close}
-        onSubmitSolution={submitSolution}
-      />
-    </main>
+    <HomeClient
+      initialConcerns={concerns}
+      initialSolutions={solutions}
+    />
   );
 }

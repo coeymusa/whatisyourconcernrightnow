@@ -24,7 +24,10 @@ import DonateLink from "./DonateLink";
 import PostDialog from "./PostDialog";
 import ShareLinks from "./ShareLinks";
 
-const TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+// Self-hosted at build time — see public/world-110m.json. Avoids a third-
+// party DNS+TLS handshake on every cold load and removes a runtime
+// dependency on jsdelivr.
+const TOPOJSON_URL = "/world-110m.json";
 
 // Country lookup is now driven by lib/countries.ts via findByM49 — supports
 // every country in the world-atlas topojson, including Antarctica.
