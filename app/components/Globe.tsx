@@ -18,25 +18,15 @@ import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import { motion, AnimatePresence } from "motion/react";
 import type { Concern, ConcernCategory, Solution } from "../lib/types";
-import { COUNTRIES, findCountry } from "../lib/countries";
+import { COUNTRIES, findByM49, findCountry } from "../lib/countries";
 import CountryLens from "./CountryLens";
 import DonateLink from "./DonateLink";
 import PostDialog from "./PostDialog";
 
 const TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-const M49_TO_ISO2: Record<string, string> = {
-  "840": "US","124": "CA","484": "MX","076": "BR","032": "AR","152": "CL","170": "CO",
-  "604": "PE","862": "VE","826": "GB","372": "IE","250": "FR","276": "DE","724": "ES",
-  "620": "PT","380": "IT","528": "NL","056": "BE","756": "CH","040": "AT","752": "SE",
-  "578": "NO","208": "DK","246": "FI","616": "PL","203": "CZ","300": "GR","642": "RO",
-  "348": "HU","804": "UA","643": "RU","792": "TR","376": "IL","422": "LB","818": "EG",
-  "682": "SA","784": "AE","364": "IR","368": "IQ","586": "PK","356": "IN","050": "BD",
-  "144": "LK","524": "NP","156": "CN","392": "JP","410": "KR","158": "TW","608": "PH",
-  "704": "VN","764": "TH","458": "MY","702": "SG","360": "ID","036": "AU","554": "NZ",
-  "710": "ZA","566": "NG","404": "KE","231": "ET","288": "GH","504": "MA","012": "DZ",
-  "788": "TN","352": "IS","233": "EE","440": "LT","428": "LV",
-};
+// Country lookup is now driven by lib/countries.ts via findByM49 — supports
+// every country in the world-atlas topojson, including Antarctica.
 
 type Bubble = {
   id: string;
@@ -132,6 +122,12 @@ export default function Globe({
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [pings, setPings] = useState<{ id: string; x: number; y: number }[]>([]);
   const [postOpen, setPostOpen] = useState(false);
+  const [postInitialCountry, setPostInitialCountry] = useState<string | undefined>(undefined);
+
+  const openPost = useCallback((country?: string) => {
+    setPostInitialCountry(country);
+    setPostOpen(true);
+  }, []);
 
   // sphere camera state
   const [rotation, setRotation] = useState<[number, number]>(INITIAL_ROTATION);
@@ -512,7 +508,7 @@ export default function Globe({
             share ↗
           </button>
           <button
-            onClick={() => setPostOpen(true)}
+            onClick={() => openPost()}
             className="bg-blood px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-bone transition hover:bg-bone hover:text-blood sm:px-4 sm:py-2"
           >
             + post yours
@@ -616,7 +612,7 @@ export default function Globe({
           {topo &&
             topo.features.map((f, i) => {
               const m49 = String((f as { id?: string | number }).id ?? "").padStart(3, "0");
-              const iso = M49_TO_ISO2[m49];
+              const iso = findByM49(m49)?.code;
               const isHover = iso && hoverCountry === iso;
               const isSelected = iso && selectedCountry === iso;
               const d = pathGen(f);
@@ -833,7 +829,7 @@ export default function Globe({
         {/* bottom action pair — post + scroll-to-explore */}
         <div className="pointer-events-auto absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
           <button
-            onClick={() => setPostOpen(true)}
+            onClick={() => openPost()}
             className="inline-flex items-center gap-2 bg-blood px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.28em] text-bone transition hover:bg-bone hover:text-blood"
           >
             <span>+ post yours</span>
@@ -864,11 +860,13 @@ export default function Globe({
         onSelectCountry={selectCountry}
         onClose={() => selectCountry(null)}
         onOpenConcern={onOpen}
+        onPostForCountry={(code) => openPost(code)}
       />
 
       {/* post dialog */}
       <PostDialog
         open={postOpen}
+        initialCountry={postInitialCountry}
         onClose={() => setPostOpen(false)}
         onSubmit={handleSubmitConcern}
       />

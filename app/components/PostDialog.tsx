@@ -14,9 +14,15 @@ type Props = {
     text: string;
     category: ConcernCategory;
   }) => void;
+  initialCountry?: string;
 };
 
-export default function PostDialog({ open, onClose, onSubmit }: Props) {
+export default function PostDialog({
+  open,
+  onClose,
+  onSubmit,
+  initialCountry,
+}: Props) {
   useEffect(() => {
     if (!open) return;
     document.body.style.overflow = "hidden";
@@ -69,6 +75,7 @@ export default function PostDialog({ open, onClose, onSubmit }: Props) {
               </button>
             </div>
             <QuickAdd
+              initialCountry={initialCountry}
               onSubmit={(input) => {
                 onSubmit(input);
                 // close shortly after to let the toast register

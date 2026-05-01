@@ -21,6 +21,7 @@ type Props = {
   onSelectCountry: (code: string | null) => void;
   onClose: () => void;
   onOpenConcern: (c: Concern) => void;
+  onPostForCountry?: (code: string) => void;
 };
 
 function relativeTime(ts: number): string {
@@ -40,6 +41,7 @@ export default function CountryLens({
   onSelectCountry,
   onClose,
   onOpenConcern,
+  onPostForCountry,
 }: Props) {
   const [catFilter, setCatFilter] = useState<ConcernCategory | "all">("all");
   const [ageFilter, setAgeFilter] = useState<AgeBracket | "all">("all");
@@ -163,6 +165,15 @@ export default function CountryLens({
                   {country.name.toLowerCase()},<br />
                   <span className="text-blood not-italic"> right now.</span>
                 </h2>
+                {onPostForCountry && (
+                  <button
+                    onClick={() => onPostForCountry(selectedCountry!)}
+                    className="group mt-6 inline-flex items-center gap-2.5 bg-blood px-5 py-3 font-mono text-[10px] uppercase tracking-[0.28em] text-bone transition hover:bg-ink"
+                  >
+                    <span>+ post about {country.name.toLowerCase()}</span>
+                    <span aria-hidden>→</span>
+                  </button>
+                )}
               </div>
 
               {/* stats */}

@@ -16,9 +16,10 @@ type Props = {
     text: string;
     category: ConcernCategory;
   }) => void;
+  initialCountry?: string;
 };
 
-export default function QuickAdd({ onSubmit }: Props) {
+export default function QuickAdd({ onSubmit, initialCountry }: Props) {
   const [age, setAge] = useState("");
   const [country, setCountry] = useState("");
   const [text, setText] = useState("");
@@ -29,13 +30,17 @@ export default function QuickAdd({ onSubmit }: Props) {
   useEffect(() => {
     const prefs = loadPrefs();
     if (prefs.age) setAge(String(prefs.age));
-    if (prefs.countryCode && isValidCountry(prefs.countryCode)) {
+    // initialCountry overrides everything — caller is asking the user to
+    // post about a specific country (e.g. clicked it on the map).
+    if (initialCountry && isValidCountry(initialCountry)) {
+      setCountry(initialCountry);
+    } else if (prefs.countryCode && isValidCountry(prefs.countryCode)) {
       setCountry(prefs.countryCode);
     } else {
       const guessed = guessCountry();
       if (guessed) setCountry(guessed);
     }
-  }, []);
+  }, [initialCountry]);
 
   const ageNum = Number(age);
   const valid =
