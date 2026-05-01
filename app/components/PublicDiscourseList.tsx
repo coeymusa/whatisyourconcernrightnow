@@ -12,6 +12,7 @@ function relativeTime(ts: number): string {
 
 const SOURCE_PILL: Record<PublicSignal["source"], string> = {
   gdelt: "press",
+  gnews: "press",
   reddit: "reddit",
   hn: "hn",
 };
@@ -39,7 +40,7 @@ export default function PublicDiscourseList({
             </span>
             <span
               className={`rounded-sm px-1.5 py-0.5 text-[9px] tracking-[0.28em] ${
-                s.source === "gdelt"
+                s.source === "gdelt" || s.source === "gnews"
                   ? "bg-blood/15 text-blood"
                   : s.source === "reddit"
                     ? "bg-amber/20 text-amber"

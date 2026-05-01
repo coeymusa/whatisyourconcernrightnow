@@ -4,6 +4,7 @@
 import {
   dedupe,
   fetchGdelt,
+  fetchGoogleNews,
   fetchHN,
   fetchRedditHot,
   interleave,
@@ -83,16 +84,17 @@ export async function getCountrySignals(
 
   const sub = COUNTRY_SUBREDDIT[countryCode];
 
-  // Three parallel sources — gives every country 2–3 shots at content even
-  // if one source is empty or rate-limited from Vercel's IP pool. HN search
-  // is the bullet-proof fallback (Algolia is the most reliable of the three).
-  const [gdelt, reddit, hn] = await Promise.all([
-    fetchGdelt(gdeltCountryQuery(country.name), 10),
-    sub ? fetchRedditHot(sub, 8) : Promise.resolve([]),
-    fetchHN(country.name, 4),
+  // Four parallel sources — Google News RSS is the most reliable from
+  // Vercel's IP pool (Reddit/GDELT both have rate-limit / IP issues).
+  // Even if 2 of 4 fail, the page still has content.
+  const [gnews, gdelt, reddit, hn] = await Promise.all([
+    fetchGoogleNews(`"${country.name}"`, 8),
+    fetchGdelt(gdeltCountryQuery(country.name), 8),
+    sub ? fetchRedditHot(sub, 6) : Promise.resolve([]),
+    fetchHN(country.name, 3),
   ]);
 
-  return dedupe(interleave(reddit, gdelt, hn)).slice(0, limit);
+  return dedupe(interleave(gnews, reddit, gdelt, hn)).slice(0, limit);
 }
 
 export async function getTopicSignals(
@@ -104,10 +106,11 @@ export async function getTopicSignals(
   const subs = TOPIC_SUBS[topic] ?? [];
   const hnQuery = TOPIC_HN_QUERY[topic];
 
-  const [hn, ...redditLists] = await Promise.all([
-    hnQuery ? fetchHN(hnQuery, 6) : Promise.resolve([]),
-    ...subs.map((s) => fetchRedditHot(s, 6)),
+  const [gnews, hn, ...redditLists] = await Promise.all([
+    fetchGoogleNews(hnQuery || topic, 8),
+    hnQuery ? fetchHN(hnQuery, 5) : Promise.resolve([]),
+    ...subs.map((s) => fetchRedditHot(s, 5)),
   ]);
 
-  return dedupe(interleave(...redditLists, hn)).slice(0, limit);
+  return dedupe(interleave(gnews, ...redditLists, hn)).slice(0, limit);
 }

@@ -10,7 +10,7 @@
 // All fetchers swallow errors and return [] so a page never blows up because
 // an external service is slow or down.
 
-export type PublicSignalSource = "gdelt" | "reddit" | "hn";
+export type PublicSignalSource = "gdelt" | "reddit" | "hn" | "gnews";
 
 export type PublicSignal = {
   source: PublicSignalSource;
@@ -199,6 +199,80 @@ export async function fetchHN(
         url: h.url ?? `https://news.ycombinator.com/item?id=${h.objectID}`,
         ts: (h.created_at_i ?? Math.floor(Date.now() / 1000)) * 1000,
       }));
+  } catch {
+    return [];
+  }
+}
+
+// ---------- Google News RSS ------------------------------------------------
+//
+// RSS feed of Google News search results. No auth, no rate limit hassle, and
+// reliable from Vercel's IP pool — unlike Reddit's public JSON endpoint.
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ");
+}
+
+function tag(item: string, name: string): string | undefined {
+  const m = item.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`));
+  return m ? decodeEntities(m[1]).trim() : undefined;
+}
+
+// Strip the trailing " - Source Name" Google News appends to titles when no
+// CDATA wraps it. We pull the source separately from the <source> tag.
+function stripSourceSuffix(title: string, source: string | undefined): string {
+  if (source && title.endsWith(` - ${source}`)) {
+    return title.slice(0, -(source.length + 3));
+  }
+  return title;
+}
+
+export async function fetchGoogleNews(
+  query: string,
+  limit = 8,
+): Promise<PublicSignal[]> {
+  const url =
+    `https://news.google.com/rss/search?q=${encodeURIComponent(query)}` +
+    `&hl=en-US&gl=US&ceid=US:en`;
+  try {
+    const r = await fetch(url, {
+      headers: { "User-Agent": UA },
+      next: { revalidate: 1800, tags: [`gnews:${query}`] },
+    });
+    if (!r.ok) return [];
+    const xml = await r.text();
+    if (!xml.includes("<item>")) return [];
+    const matches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+    const out: PublicSignal[] = [];
+    for (const m of matches.slice(0, limit * 2)) {
+      const item = m[1];
+      const titleRaw = tag(item, "title");
+      const link = tag(item, "link");
+      const pubDate = tag(item, "pubDate");
+      const source = tag(item, "source");
+      if (!titleRaw || !link) continue;
+      const title = stripSourceSuffix(titleRaw, source);
+      if (!isLikelyEnglish(title)) continue;
+      const ts = pubDate ? Date.parse(pubDate) : Date.now();
+      out.push({
+        source: "gnews",
+        sourceLabel: source ?? "google news",
+        title: cleanTitle(title),
+        url: link,
+        ts: Number.isFinite(ts) ? ts : Date.now(),
+      });
+      if (out.length >= limit) break;
+    }
+    return out;
   } catch {
     return [];
   }
