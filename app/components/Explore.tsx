@@ -195,7 +195,7 @@ export default function Explore({ concerns, solutions, onOpen, loadOlder }: Prop
   return (
     <section
       id="explore"
-      className="paper-grain relative isolate bg-paper-deep px-5 py-20 text-ink sm:px-10 sm:py-28 lg:px-16"
+      className="paper-grain relative isolate overflow-x-clip bg-paper-deep px-5 py-20 text-ink sm:px-10 sm:py-28 lg:px-16"
     >
       <div className="mx-auto max-w-7xl">
         {/* masthead */}
@@ -349,6 +349,7 @@ export default function Explore({ concerns, solutions, onOpen, loadOlder }: Prop
                     duration: 0.35,
                     delay: Math.min(i * 0.015, 0.25),
                   }}
+                  className="min-w-0"
                 >
                   <div className="group flex h-full w-full min-w-0 flex-col border border-ink/15 bg-bone text-ink transition hover:border-ink hover:shadow-[0_14px_36px_-20px_rgba(10,9,8,0.35)]">
                     <button
