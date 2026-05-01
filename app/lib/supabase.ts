@@ -102,6 +102,21 @@ export async function fetchCategoryCounts(): Promise<Map<string, number>> {
   return out;
 }
 
+// Single-row read by id, used by /dispatch/[id] permalink pages.
+export async function fetchConcernById(id: string): Promise<Row | null> {
+  const base = process.env[URL_KEY];
+  const k = key();
+  if (!base || !k) return null;
+  const url = `${base}/rest/v1/concerns_public?select=*&id=eq.${encodeURIComponent(id)}&limit=1`;
+  const r = await fetch(url, {
+    headers: headers(k),
+    next: { revalidate: 600, tags: [`concern:${id}`] },
+  });
+  if (!r.ok) return null;
+  const rows = (await r.json()) as Row[];
+  return rows[0] ?? null;
+}
+
 // Country-filtered read used by /world/[code] server-rendered pages.
 export async function fetchByCountry(
   countryCode: string,

@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "motion/react";
 import DonateLink from "./DonateLink";
 import Dispatch from "./Dispatch";
 
@@ -12,19 +9,13 @@ export default function Manifesto() {
           § 02 — the manifesto
         </div>
 
-        <motion.h2
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-10%" }}
-          transition={{ duration: 0.9 }}
-          className="mt-6 font-serif text-5xl leading-[1.05] sm:text-7xl"
-        >
+        <h2 className="mt-6 font-serif text-5xl leading-[1.05] sm:text-7xl">
           this is a record.<br />
           <span className="italic text-blood">it is anonymous.</span><br />
           it cannot be edited.<br />
           it cannot be censored.<br />
           one voice, one entry.
-        </motion.h2>
+        </h2>
 
         <div className="mt-16 grid gap-8 border-t border-bone/15 pt-10 sm:grid-cols-2">
           <p className="font-serif text-xl italic leading-snug text-bone/85">
