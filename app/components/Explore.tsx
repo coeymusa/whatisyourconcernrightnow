@@ -66,6 +66,8 @@ export default function Explore({ concerns, solutions, onOpen, loadOlder }: Prop
   const [sort, setSort] = useState<Sort>("newest");
   const [visible, setVisible] = useState(VISIBLE_INITIAL);
   const [mounted, setMounted] = useState(false);
+  // mobile filters are collapsed by default — too tall otherwise
+  const [filtersOpen, setFiltersOpen] = useState(false);
   useEffect(() => setMounted(true), []);
 
   // local optimistic vote tracking
@@ -211,8 +213,21 @@ export default function Explore({ concerns, solutions, onOpen, loadOlder }: Prop
           </div>
         </div>
 
+        {/* mobile filters toggle — collapsed by default since the full
+            filter stack is too tall for a phone */}
+        <button
+          onClick={() => setFiltersOpen((v) => !v)}
+          aria-expanded={filtersOpen}
+          className="mt-6 flex w-full items-center justify-between border border-ink/15 bg-bone px-4 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/65 transition hover:border-ink sm:hidden"
+        >
+          <span>
+            filters{(cat !== "all" || age !== "all" || country !== "all" || query) ? " · active" : ""}
+          </span>
+          <span className="text-ink/45">{filtersOpen ? "hide ↑" : "show ↓"}</span>
+        </button>
+
         {/* filters */}
-        <div className="mt-8 grid gap-6">
+        <div className={`mt-8 grid gap-6 ${filtersOpen ? "" : "hidden"} sm:grid`}>
           {/* topic chips */}
           <FilterRow
             label="topic"
@@ -340,11 +355,11 @@ export default function Explore({ concerns, solutions, onOpen, loadOlder }: Prop
                       onClick={() => onOpen(c)}
                       className="flex flex-1 flex-col gap-3 p-5 text-left"
                     >
-                      <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
-                        <span className="text-blood">
+                      <div className="flex items-baseline justify-between gap-6 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                        <span className="truncate text-blood">
                           {findCountry(c.countryCode)?.name ?? c.countryCode}
                         </span>
-                        <span>age {c.age}</span>
+                        <span className="shrink-0 whitespace-nowrap">age&nbsp;{c.age}</span>
                       </div>
                       <p className="font-serif text-xl leading-snug text-ink sm:text-[1.35rem]">
                         “{c.text}”
@@ -354,14 +369,14 @@ export default function Explore({ concerns, solutions, onOpen, loadOlder }: Prop
                           {c.original.lang}: “{c.original.text}”
                         </p>
                       )}
-                      <div className="mt-auto flex items-center justify-between border-t border-ink/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
-                        <span>{CATEGORY_LABELS[c.category].toLowerCase()}</span>
-                        <span className="flex items-center gap-3">
+                      <div className="mt-auto flex items-center justify-between gap-6 border-t border-ink/15 pt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink/55">
+                        <span className="truncate">{CATEGORY_LABELS[c.category].toLowerCase()}</span>
+                        <span className="flex shrink-0 items-center gap-4 whitespace-nowrap">
                           <span className="text-amber">
-                            {respN} response{respN === 1 ? "" : "s"}
+                            {respN}&nbsp;response{respN === 1 ? "" : "s"}
                           </span>
                           <span className="text-ink/40">
-                            {mounted ? relTime(c.ts) : "—"} ago
+                            {mounted ? relTime(c.ts) : "—"}&nbsp;ago
                           </span>
                         </span>
                       </div>

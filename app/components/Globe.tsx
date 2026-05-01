@@ -42,6 +42,10 @@ type Props = {
   totalCountries: number;
   responses: number;
   loaded?: boolean;
+  // ambient rotation speed in degrees / second. 0 (or undefined) disables.
+  // demo uses ~6 deg/s; main site uses ~2.5 deg/s for a barely-perceptible
+  // drift that signals "live" without distracting from posts being read.
+  autoRotate?: number;
   onSubmit: (input: {
     age: number;
     countryCode: string;
@@ -114,6 +118,7 @@ export default function Globe({
   totalCountries,
   responses,
   loaded = false,
+  autoRotate = 0,
   onSubmit,
   onOpen,
 }: Props) {
@@ -242,14 +247,25 @@ export default function Globe({
     concernsRef.current = concerns;
   }, [concerns]);
 
+  // keep latest projection in a ref so the cycler effect (below) doesn't
+  // need projection in its dep array — with autoRotate enabled, projection
+  // changes every frame, which would otherwise restart the timer 60×/sec
+  // and prevent any tick from ever firing
+  const projectionRef = useRef<GeoProjection>(projection);
+  useEffect(() => {
+    projectionRef.current = projection;
+  });
+
   // remove bubbles whose country has rotated to the back hemisphere
   useEffect(() => {
     setBubbles((prev) => {
-      return prev.filter((b) => {
+      const next = prev.filter((b) => {
         const country = findCountry(b.concern.countryCode);
         if (!country) return false;
         return isFrontHemisphere(projection, country.lon, country.lat);
       });
+      // avoid causing a re-render when nothing actually changed
+      return next.length === prev.length ? prev : next;
     });
   }, [projection]);
 
@@ -264,8 +280,11 @@ export default function Globe({
     // 1 bubble on mobile so it doesn't dominate the screen, 3 on desktop
     const maxBubbles = isSmall ? 1 : 3;
 
+    let nextTimer: number | undefined;
+
     function tick() {
       if (cancelled) return;
+      const proj = projectionRef.current;
       const now = Date.now();
       setBubbles((prev) => {
         const live = prev.filter((b) => now - b.bornAt < b.ttl);
@@ -279,7 +298,7 @@ export default function Globe({
           if (live.some((b) => b.concern.id === c.id)) continue;
           const country = findCountry(c.countryCode);
           if (!country) continue;
-          const p = projectIfVisible(projection, country.lon, country.lat);
+          const p = projectIfVisible(proj, country.lon, country.lat);
           if (!p) continue;
           const [x, y] = p;
           if (
@@ -293,7 +312,7 @@ export default function Globe({
           const conflict = live.some((b) => {
             const bc = findCountry(b.concern.countryCode);
             if (!bc) return false;
-            const bp = projection([bc.lon, bc.lat]);
+            const bp = proj([bc.lon, bc.lat]);
             if (!bp) return false;
             return distance(bp[0], bp[1], x, y) < MIN_BUBBLE_GAP;
           });
@@ -317,15 +336,16 @@ export default function Globe({
       const nextDelay = isSmall
         ? 4000 + Math.random() * 3000
         : 1500 + Math.random() * 1500;
-      window.setTimeout(tick, nextDelay);
+      nextTimer = window.setTimeout(tick, nextDelay);
     }
 
     const t0 = window.setTimeout(tick, 800);
     return () => {
       cancelled = true;
       window.clearTimeout(t0);
+      if (nextTimer !== undefined) window.clearTimeout(nextTimer);
     };
-  }, [size.w, size.h, projection]);
+  }, [size.w, size.h]);
 
   // ----- Pointer interactions: drag (1 finger) + pinch (2 fingers) ------
   const dragRef = useRef<{ x: number; y: number; rot: [number, number] } | null>(null);
@@ -475,6 +495,38 @@ export default function Globe({
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
   }, [selectedCountry, animateToCountry]);
+
+  // demo mode: drift longitude continuously (~6°/sec) when nobody's dragging
+  // and there's no in-flight pan animation. selectedCountry is read through
+  // a ref so opening the lens doesn't tear down the rAF chain (which trips
+  // 'Maximum update depth' under React's dev-mode tracking).
+  const selectedCountryRef = useRef<string | null>(selectedCountry);
+  useEffect(() => {
+    selectedCountryRef.current = selectedCountry;
+  }, [selectedCountry]);
+
+  useEffect(() => {
+    if (!autoRotate || autoRotate <= 0) return;
+    const degPerMs = autoRotate / 1000;
+    let raf: number | null = null;
+    let last = performance.now();
+    const step = (now: number) => {
+      const dt = Math.min(64, now - last);
+      last = now;
+      if (
+        !isDraggingRef.current &&
+        animRef.current === null &&
+        !selectedCountryRef.current
+      ) {
+        setRotation(([lon, lat]) => [lon + dt * degPerMs, lat]);
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => {
+      if (raf !== null) cancelAnimationFrame(raf);
+    };
+  }, [autoRotate]);
 
   // ----- Submit & ping --------------------------------------------------
   const handleSubmitConcern = useCallback(

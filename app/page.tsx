@@ -30,6 +30,7 @@ export default function Home() {
         totalCountries={countries}
         responses={solutions.length}
         loaded={loaded}
+        autoRotate={2.5}
         onSubmit={submit}
         onOpen={open}
       />
