@@ -2,12 +2,14 @@ node_modules/
 .next/
 out/
 *.log
+
+# Env files — match .env, .env.*, .env-* (covers .env-local, .env-cron*, etc.)
 .env
-.env.local
-.env.*.local
-.vercel
-.DS_Store
+.env.*
+.env-*
 
 .vercel
+.DS_Store
 .claude/
-.env-cron*
+
+PRESS/_drafts/
