@@ -114,6 +114,27 @@ export async function fetchByCountry(
   return (await r.json()) as Row[];
 }
 
+// Category-filtered read used by /topics/[slug] server-rendered pages.
+export async function fetchByCategory(
+  category: string,
+  limit = 60,
+): Promise<Row[]> {
+  const base = process.env[URL_KEY];
+  const k = key();
+  if (!base || !k) return [];
+  const safeLimit = Math.max(1, Math.min(limit, 200));
+  const url =
+    `${base}/rest/v1/concerns_public?select=*` +
+    `&category=eq.${encodeURIComponent(category)}` +
+    `&order=created_at.desc&limit=${safeLimit}`;
+  const r = await fetch(url, {
+    headers: headers(k),
+    next: { revalidate: 300, tags: [`category:${category}`] },
+  });
+  if (!r.ok) return [];
+  return (await r.json()) as Row[];
+}
+
 export async function insertConcern(input: {
   age: number;
   bracket: string;

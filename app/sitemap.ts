@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
+import { COUNTRIES } from "./lib/countries";
 import { fetchRecent, hasSupabase } from "./lib/supabase";
+import { CATEGORY_ORDER } from "./lib/types";
 
 const SITE_URL = "https://whatisyourconcern.com";
 
@@ -7,16 +9,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: SITE_URL,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 1.0,
-    },
+    { url: SITE_URL, lastModified: now, changeFrequency: "daily", priority: 1.0 },
+    { url: `${SITE_URL}/world`, lastModified: now, changeFrequency: "daily", priority: 0.85 },
+    { url: `${SITE_URL}/topics`, lastModified: now, changeFrequency: "daily", priority: 0.85 },
+    { url: `${SITE_URL}/featured`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
   ];
 
-  // Per-dispatch permalinks. Cap at 500 so the sitemap stays under Google's
-  // soft limit; newer concerns first.
+  const countryPages: MetadataRoute.Sitemap = COUNTRIES.map((c) => ({
+    url: `${SITE_URL}/world/${c.code.toLowerCase()}`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+
+  const topicPages: MetadataRoute.Sitemap = CATEGORY_ORDER.map((slug) => ({
+    url: `${SITE_URL}/topics/${slug}`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.75,
+  }));
+
+  // Per-dispatch permalinks. Cap at 1000 — newer concerns first.
   let dispatchPages: MetadataRoute.Sitemap = [];
   if (hasSupabase()) {
     try {
@@ -32,5 +45,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return [...staticPages, ...dispatchPages];
+  return [
+    ...staticPages,
+    ...countryPages,
+    ...topicPages,
+    ...dispatchPages,
+  ];
 }

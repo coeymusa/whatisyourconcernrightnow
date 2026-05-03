@@ -29,10 +29,31 @@ export default function Manifesto() {
 
         <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-2 font-mono text-[10px] uppercase tracking-[0.28em] text-bone/55">
           <a
+            href="/world"
+            className="group inline-flex items-center gap-2 py-2 hover:text-bone"
+          >
+            <span>browse by country</span>
+            <span className="text-blood">→</span>
+          </a>
+          <a
+            href="/topics"
+            className="group inline-flex items-center gap-2 py-2 hover:text-bone"
+          >
+            <span>browse by topic</span>
+            <span className="text-blood">→</span>
+          </a>
+          <a
             href="/random"
             className="group inline-flex items-center gap-2 py-2 hover:text-bone"
           >
             <span>stumble on a voice</span>
+            <span className="text-blood">→</span>
+          </a>
+          <a
+            href="/featured"
+            className="group inline-flex items-center gap-2 py-2 hover:text-bone"
+          >
+            <span>featured in</span>
             <span className="text-blood">→</span>
           </a>
           <a

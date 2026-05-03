@@ -7,7 +7,7 @@ import "./globals.css";
 const SITE_URL = "https://whatisyourconcern.com";
 const SITE_NAME = "what is your concern?";
 const SITE_DESC =
-  "An anonymous global record of what humanity is afraid of, right now. Add your voice. The world is listening.";
+  "An anonymous global record of what humanity is afraid of, right now. One concern per person, from anywhere in the world, owned by nobody. No replies, no metrics, no ads. The world is listening.";
 
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
@@ -54,6 +54,17 @@ export const metadata: Metadata = {
     "post anonymously",
     "anonymous confession",
     "what are people afraid of",
+    "what is humanity afraid of",
+    "anonymous global hive mind",
+    "no metrics no ads",
+    "owned by nobody",
+    "one concern per person",
+    "anonymous voices from around the world",
+    "post your fear",
+    "global fears 2026",
+    "anonymous social experiment",
+    "concerns by country",
+    "concerns by topic",
   ],
   authors: [{ name: "whatisyourconcern.com", url: SITE_URL }],
   creator: "whatisyourconcern.com",
@@ -139,6 +150,9 @@ const jsonLd = {
         width: 96,
         height: 96,
       },
+      sameAs: [
+        "https://clowillaerts.substack.com/p/chaos-and-amazement-2618-vine-is",
+      ],
     },
     {
       "@type": "WebSite",
@@ -149,6 +163,11 @@ const jsonLd = {
       description: SITE_DESC,
       inLanguage: "en",
       publisher: { "@id": `${SITE_URL}/#org` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${SITE_URL}/topics/{search_term_string}`,
+        "query-input": "required name=search_term_string",
+      },
     },
     {
       "@type": "WebApplication",
@@ -170,6 +189,60 @@ const jsonLd = {
       ],
       inLanguage: "en",
       publisher: { "@id": `${SITE_URL}/#org` },
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${SITE_URL}/#faq`,
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "What is whatisyourconcern.com?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "An anonymous global record of what humanity is afraid of, right now. One concern per person, from anywhere in the world, owned by nobody. No replies, no metrics, no ads.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Is it really anonymous?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. There are no accounts, no names, no logins. The site does not track contributors. An IP hash is used only for spam rate-limiting and is not linked to a profile.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "What can I post?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "One concern. One sentence in your own words about something you are genuinely worried, afraid, or anxious about — economic, climate, war, democracy, loneliness, AI, the future, anything.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can I delete or edit my entry?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "No. The record cannot be edited and cannot be censored. Once a voice is on the record it stays on the record. That is the point.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How are concerns translated?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "English by default. When the original is in another language, the original is preserved and shown beneath the English version in muted monospace.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can I share an entry?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Every entry has a permanent shareable URL at /dispatch/<id>. You can also browse by country at /world or by topic at /topics.",
+          },
+        },
+      ],
     },
   ],
 };

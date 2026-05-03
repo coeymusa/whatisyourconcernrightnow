@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { COUNTRIES } from "../../../lib/countries";
 import { fetchRecent, hasSupabase } from "../../../lib/supabase";
+import { CATEGORY_ORDER } from "../../../lib/types";
 
 // IndexNow cron — submits the site's URLs to Bing/Yandex/DDG/Naver/Seznam
 // so newly posted concerns get indexed in minutes instead of days.
@@ -22,15 +24,26 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // top of the URL list — surface pages that should always be re-pinged
+  // top of the URL list — surface pages that should always be re-pinged.
   const urls: string[] = [
     `${SITE}/`,
-    `${SITE}/demo`,
+    `${SITE}/world`,
+    `${SITE}/topics`,
+    `${SITE}/featured`,
   ];
 
-  // every concern permalink we know about — sitemap caps at 500 to stay
-  // under provider limits, IndexNow has its own 10k batch cap so 500 is
-  // comfortable.
+  // every country index page — 186 of them, all crawl targets.
+  for (const c of COUNTRIES) {
+    urls.push(`${SITE}/world/${c.code.toLowerCase()}`);
+  }
+
+  // every topic index page — 12 of them.
+  for (const slug of CATEGORY_ORDER) {
+    urls.push(`${SITE}/topics/${slug}`);
+  }
+
+  // every concern permalink we know about — IndexNow has a 10k batch cap so
+  // 500 dispatch URLs + ~200 index URLs is comfortable.
   if (hasSupabase()) {
     try {
       const rows = await fetchRecent(500, 0, 0);
